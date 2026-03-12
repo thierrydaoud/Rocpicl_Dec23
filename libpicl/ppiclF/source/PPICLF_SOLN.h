@@ -34,7 +34,15 @@
       REAL*8 PPICLF_TIMEBH(PPICLF_VU)
       REAL*8 PPICLF_DRUDTPLAG(3,PPICLF_VU,PPICLF_LPART)
       REAL*8 PPICLF_DRUDTMIXT(3,PPICLF_VU,PPICLF_LPART)
+      REAL*8 PPICLF_DTDTPLAG(PPICLF_VU,PPICLF_LPART)
+      REAL*8 PPICLF_DTDTMIXT(PPICLF_VU,PPICLF_LPART)
+      REAL*8 PPICLF_TMIXT(PPICLF_VU,PPICLF_LPART)
+      REAL*8 PPICLF_TPLAG(PPICLF_VU,PPICLF_LPART)
       COMMON /PPICLF_SLN_UNSTEADY/  PPICLF_TIMEBH
      >                             ,PPICLF_DRUDTPLAG
      >                             ,PPICLF_DRUDTMIXT
+     >                             ,PPICLF_DTDTPLAG
+     >                             ,PPICLF_DTDTMIXT
+     >                             ,PPICLF_TMIXT
+     >                             ,PPICLF_TPLAG
 

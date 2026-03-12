@@ -141,7 +141,8 @@ INTEGER :: errorFlag,icg
         rmu_fixed_param, rmu_suth_param, qs_fluct_filter_flag, &
         qs_fluct_filter_adapt_flag, &
         ViscousUnsteady_flag, ppiclf_nUnsteadyData,ppiclf_nTimeBH, &
-        sbNearest_flag, burnrate_flag, flow_model, pseudoTurb_flag
+        sbNearest_flag, burnrate_flag, flow_model, pseudoTurb_flag, &
+        HTUnsteady_flag
    REAL(RFREAL) :: rmu_ref, tref, suth, ksp, erest
    COMMON /RFLU_ppiclF/ stationary, qs_flag, am_flag, pg_flag, &
         collisional_flag, heattransfer_flag, feedback_flag, &
@@ -149,7 +150,8 @@ INTEGER :: errorFlag,icg
         rmu_fixed_param, rmu_suth_param, qs_fluct_filter_flag, &
         qs_fluct_filter_adapt_flag, ksp, erest, &
         ViscousUnsteady_flag, ppiclf_nUnsteadyData,ppiclf_nTimeBH, &
-        sbNearest_flag, burnrate_flag, flow_model, pseudoTurb_flag
+        sbNearest_flag, burnrate_flag, flow_model, pseudoTurb_flag, &
+        HTUnsteady_flag
    REAL(RFREAL) :: ppiclf_rcp_part
    CHARACTER(12) :: ppiclf_matname
    COMMON /RFLU_ppiclf_misc01/ ppiclf_rcp_part
@@ -204,6 +206,7 @@ pg_flag = global%piclPgFlag
 collisional_flag = global%piclCollisionFlag
 ViscousUnsteady_flag = global%piclViscousUnsteady
 heattransfer_flag = global%piclHeatTransferFlag
+HTUnsteady_flag = global%piclHTUnsteadyFlag
 feedback_flag = global%piclFeedbackFlag
 qs_fluct_flag = global%piclQsFluctFlag
 ppiclf_debug = global%piclDebug
@@ -801,6 +804,7 @@ IF ( global%myProcid == MASTERPROC) then
    print*, 'collisional_flag     = ',global%piclCollisionFlag
    print*, 'ViscousUnsteady_flag = ',global%piclViscousUnsteady
    print*, 'heattransfer_flag    = ',global%piclHeatTransferFlag
+   print*, 'HTUnsteady_flag      = ',global%piclHTUnsteadyFlag
    print*, 'feedback_flag        = ',global%piclFeedbackFlag
    print*, 'qs_fluct_flag        = ',global%piclQsFluctFlag
    print*, 'ppiclf_debug         = ',global%piclDebug

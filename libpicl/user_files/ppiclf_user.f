@@ -65,7 +65,7 @@
 
       real*8 beta,cd
 
-      real*8 factor, rcp_fluid, rmass_add
+      real*8 factor, rmass_add
 
       real*8 gkern
 
@@ -78,7 +78,7 @@
       integer*4 store_forces
 
 ! Needed for heat transfer
-      real*8 qq, rmass_therm, temp
+      real*8 qq, rmass_therm, temp, qq_du
 
 ! Needed for reactive particles
       integer*4 burnrate_model
@@ -93,7 +93,7 @@
       real*8 lift
 
 ! Finite Diff Material derivative Variables
-      integer*4 nstage, istage
+      integer*4 nstage, iStage
       integer*4 icallb
       save      icallb
       data      icallb /0/
@@ -157,15 +157,15 @@
 
       icallb = icallb + 1
       nstage = 3
-      istage = mod(icallb,nstage)
-      if (istage .eq. 0) istage = 3  
+      iStage = mod(icallb,nstage)
+      if (iStage .eq. 0) iStage = 3  
 
       ! Count every iStage=1 for debug output
       if (iStage .eq. 1) idebug = idebug + 1
 
       ! Print dt and time every time step
       if (ppiclf_nid==0) then
-        if (istage .eq. 1) then
+        if (iStage .eq. 1) then
           write(6,'(a,2x,2(1pe14.6),2x,i3)') '*** PPICLF dt, time = ',
      >      ppiclf_dt,ppiclf_time
         endif
@@ -191,10 +191,10 @@
       rpr        = 0.70d0
       rcp_fluid  = 1004.64d0
 
-      fac = ppiclf_rk3ark(iStage)*ppiclf_dt
+      fac = ppiclf_rk3dtrk(iStage)*ppiclf_dt
       if (1==2) then
          if (ppiclf_nid==0) print*,'dt,fac=',
-     >      istage,ppiclf_dt,fac,
+     >      iStage,ppiclf_dt,fac,
      >      stationary, qs_flag, am_flag, pg_flag,
      >      collisional_flag, heattransfer_flag, feedback_flag,
      >      qs_fluct_flag, ppiclf_debug, ppiclf_nTimeBH,
@@ -292,6 +292,7 @@
          rep    = vmag*dp*rhof/rmu
          rphip  = ppiclf_rprop(PPICLF_R_JPHIP,i)
          rphif  = 1.0d0-ppiclf_rprop(PPICLF_R_JPHIP,i)
+         rem    = (1.0d0-rphip)*rep   ! mean slip Reynolds Number
          asndf  = ppiclf_rprop(PPICLF_R_JCS,i)
          rmachp = vmag/asndf
          rhop   = ppiclf_rprop(PPICLF_R_JRHOP,i)
@@ -299,7 +300,7 @@
          ! TLJ - 04/03/2025; Do not calculate forces if vmag = 0
          !       Otherwise the particles might move before the 
          !       shock arrives
-         if (vmag <= 1.d-8) cycle
+!         if (vmag <= 1.d-8) cycle
 
          ! 08/08/2025 - Thierry  - 1.d-8 is very small
          if (vmag <= 1.d-3) cycle
@@ -315,7 +316,7 @@
 
          ! Thierry - seeing if that fixes the issue of very large CD
          ! initially 
-         if(vmag .lt. 1.0 .or. rmachp .lt. 1.d-3) cycle
+         !if(vmag .lt. 1.0 .or. rmachp .lt. 1.d-3) cycle
  
          ! TLJ - redefined rprop(PPICLF_R_JSPT,i) to be the particle
          !   velocity magnitude for plotting purposes - 01/03/2025
@@ -336,8 +337,6 @@
          !*** AVERY - we should rethink this limit of 62% pVF ***
 
          ! TLJ: Needed for viscous unsteady force
-         !      Using same nomenclature as rocinteract subroutines
-         reyL = dp*vmag*rhof/rmu
          rnu = rmu/rhof
 
          ! Zero out for each particle i
@@ -354,7 +353,7 @@
          taux = 0.0d0; tauy = 0.0d0; tauz = 0.0d0;
          liftx = 0.0d0; lifty = 0.0d0; liftz = 0.0d0;
          fvux = 0.0d0; fvuy = 0.0d0; fvuz = 0.0d0;
-         qq=0.0d0
+         qq=0.0d0; qq_du=0.0d0
          mdot_me = 0.0d0; mdot_ox = 0.0d0;
          upmean = 0.0; vpmean = 0.0; wpmean = 0.0;
          u2pmean = 0.0; v2pmean = 0.0; w2pmean = 0.0;
@@ -380,7 +379,6 @@
      >           famx,famy,famz,rmass_add)
          endif ! end am_flag = 2
 
-
 !
 ! Step 1b: Call NearestNeighbor if particles i and j interact
 !
@@ -404,8 +402,6 @@
 
             if (qs_fluct_filter_flag==0) then
                ! box filter
-               !***AVERY - I think phipmean is using wrong index ***
-               ! Also, none of the below are means...
                phipmean = ppiclf_rprop(PPICLF_R_JVOLP,i)
                upmean   = ppiclf_y(PPICLF_JVX,i)
                vpmean   = ppiclf_y(PPICLF_JVY,i)
@@ -591,10 +587,25 @@
 !
 ! Step 7: Viscous unsteady force with history kernel
 !
+! Step 7: Viscous-unsteady force with history kernel
+!         Diffusive-unsteady heat transfer is also calculated in this call
+         ! 1 == original Trapezoidal code for uniform dt
+         ! 2 == original Trapezoidal code for variable dt
+         ! 3 == modified Trapezoidal method for variable dt
+         ! 4 == Hinsberg method for variable dt
          if (ViscousUnsteady_flag==1) then
-            call ppiclf_user_VU_Rocflu(i,iStage,fvux,fvuy,fvuz)
+            call ppiclf_user_history_uniformtrap
+     >           (i,iStage,fvux,fvuy,fvuz,qq_du)
+         elseif (ViscousUnsteady_flag==2) then
+            call ppiclf_user_history_variabletrap
+     >           (i,iStage,fvux,fvuy,fvuz,qq_du)
+         elseif (ViscousUnsteady_flag==3) then
+            call ppiclf_user_history_modifiedtrap
+     >           (i,iStage,fvux,fvuy,fvuz,qq_du)
+         elseif (ViscousUnsteady_flag==4) then
+            call ppiclf_user_history_hinsberg
+     >           (i,iStage,fvux,fvuy,fvuz,qq_du)
          endif
-
 
 !
 ! Step 8a: Combustion model for reactive particles
@@ -613,7 +624,10 @@
             call ppiclf_user_HT_driver(i,qq)
          endif ! heattransfer_flag >= 1
 
-
+!
+! Step 8c : Diffusive Unsteady Heat Transfer model
+!           Calculated in same subroutine as Viscous Unsteady
+         if (HTUnsteady_flag==0) qq_du = 0.0d0
 !
 ! Step 9a: Angular velocity model
 !
@@ -636,7 +650,6 @@
             call ppiclf_user_Lift_driver(i,iStage,liftx,lifty,liftz)
          endif ! collisional_flag == 4
 
-
 !
 ! Step 10: Set ydot for all PPICLF_SLN number of equations
 !
@@ -649,7 +662,7 @@
      >                               (rmass+rmass_add)
          ppiclf_ydot(PPICLF_JVZ,i) = (fqsz+famz+fdpdz+fvuz+liftz+fcz)/
      >                               (rmass+rmass_add)
-         ppiclf_ydot(PPICLF_JT,i)  = qq/rmass_therm
+         ppiclf_ydot(PPICLF_JT,i)  = (qq+qq_du)/rmass_therm
          ppiclf_ydot(PPICLF_JOX,i) = taux/rmass_omega
          ppiclf_ydot(PPICLF_JOY,i) = tauy/rmass_omega
          ppiclf_ydot(PPICLF_JOZ,i) = tauz/rmass_omega
@@ -657,15 +670,18 @@
          ppiclf_ydot(PPICLF_JOXIDE,i)  = mdot_ox
 
 !
-! Update data for viscous unsteady case
+! Update data for viscous unsteady case at every RK3 stage
 !
          if (ViscousUnsteady_flag>=1) then
-            call ppiclf_user_UpdatePlag(i)
+            call ppiclf_user_UpdatePlag(i,iStage)
          endif
 
 !
 ! Step 11: Feed Back force to the gas phase
 !
+         ! Comment: ydotc represented the collisional force in the
+         !    particle eqautions above. Here, we over-write the
+         !    ydotc vectors for the feedback force used in Rocflu.
          !    Note that Rocflu uses a negative of the RHS, and
          !    so ppiclf must respect this odd convention.
          !
@@ -884,13 +900,11 @@
                if (iStage==3) then
                   if (i==1) then
                      write(7010,*) i,ppiclf_time,rmass,vmag,rhof,dp,
-     >                rep,rphip,rphif,rmachp,rhop,rhoMixt,reyL,
-     >             rmu,rnu,rkappa
+     >                rep,rphip,rphif,rmachp,rhop,rmu,rnu,rkappa
                   endif
                   if (i==ppiclf_npart) then
                      write(7011,*) i,ppiclf_time,rmass,vmag,rhof,dp,
-     >                rep,rphip,rphif,rmachp,rhop,rhoMixt,reyL,
-     >                rmu,rnu,rkappa
+     >                rep,rphip,rphif,rmachp,rhop,rmu,rnu,rkappa
                   endif
                endif
             endif
@@ -931,7 +945,6 @@
          endif
          endif
          endif
-
 
 
       enddo ! do i=1,ppiclf_npart

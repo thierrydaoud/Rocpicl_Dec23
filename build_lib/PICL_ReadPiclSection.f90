@@ -142,6 +142,8 @@ SUBROUTINE PICL_ReadPiclSection( global )
   keys(26)  = 'ROUT'
   keys(27)  = 'SUBBIN'
   keys(28)  = 'REACTIVE'
+  keys(29)  = 'PSEUDOTURB'
+  keys(30)  = 'DU HEATTRANSFER'
  
   CALL ReadSection( global,IF_INPUT,nVals,keys(1:nVals),vals(1:nVals), & 
                     defined(1:nVals) ) 
@@ -192,7 +194,7 @@ SUBROUTINE PICL_ReadPiclSection( global )
     global%piclFilterWidth = vals(11)
   ELSE
     IF (global%piclUsed) THEN
-      CAll ErrorStop(global,ERR_PICL_FWIDTH_UNDEF,184,'')
+      CAll ErrorStop(global,ERR_PICL_FWIDTH_UNDEF,186,'')
     END IF
   END IF
 
@@ -262,6 +264,14 @@ SUBROUTINE PICL_ReadPiclSection( global )
 
   IF (defined(28) .EQV. .TRUE. ) THEN
     global%piclBurnRateFlag = vals(28)
+  END IF
+  
+  IF (defined(29) .EQV. .TRUE. ) THEN
+    global%piclPseudoTurbFlag = NINT(vals(29))
+  END IF
+
+  IF (defined(30) .EQV. .TRUE. ) THEN
+     global%piclHTUnsteadyFlag = NINT(vals(30))
   END IF
 
 ! finalize

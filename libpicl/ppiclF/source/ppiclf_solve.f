@@ -1032,6 +1032,14 @@ c----------------------------------------------------------------------
         !rk3(1,:) = Temp storage i.e. Previous Stage RHS
         !rk3(2,:) = Temp storage i.e. Current Stage iteration
         !rk3(3,:) = Temp storage i.e. Current Stage RHS
+
+        ! 11/20/2025 - These are the time fraction steps between
+        ! the different RK stages. Multiply by ppiclf_dt to get
+        ! the dt at the current stage
+        ppiclf_rk3dtrk(1) = 8.0d0/15.0d0
+        ppiclf_rk3dtrk(2) = 2.0d0/15.0d0
+        ppiclf_rk3dtrk(3) = 5.0d0/15.0d0
+
         ppiclf_rk3ark(1) = 8.0d0/15.0d0
         ppiclf_rk3ark(2) = 5.0d0/12.0d0
         ppiclf_rk3ark(3) = 0.75d0
@@ -1602,29 +1610,34 @@ c----------------------------------------------------------------------
           END DO !jSB
         END DO !iSB
         nnearest = MIN(nnearest,27)
+        remove = .FALSE.
         IF(nnearest .LT. 1) remove = .TRUE.
 
-        ! Remove particle outside of any cell
-        IF(nnearest .LT. 27 .AND. nnearest .GE. 1) THEN
-         ie = CellID_nearest(1)
-         DO l = 1,3
-          ! similar distance check as above, but only for the cell that is
-          ! closest to the particle (1st index in nnearest)
-          ! used ABS since distance isn't squared.
-          ! ppiclf_interp_dchk is set to be 1.5xmax cell length per
-          ! dimension (in SUBROUTINE ppiclf_solve_InterpTupleTransfer)
-          IF(ppiclf_linperiodic(l) .AND.
-     >                            ppiclf_EqualDomain(l)) THEN
-            dl = ABS(MIN((ppiclf_picl_grid(l,ie) - xp(l)), 
-     >             (binblength(l)-ABS(ppiclf_picl_grid(l,ie)
-     >              - xp(l)))))
-          ELSE
-            dl = ABS(ppiclf_picl_grid(l,ie) - xp(l))
-          END IF
-          ! Ensure particle is within 1/2 cell distance of one cell.
-          IF(dl .GT. ppiclf_interp_dchk(l)/1.5D0*0.5D0) remove = .TRUE.
-         END DO
-        END IF
+        ! Thierry - 03/11/2026 - This section is not correct 
+        ! as it was deleting erroneously particles. Commenting out for
+        ! now.
+
+!        ! Remove particle outside of any cell
+!        IF(nnearest .LT. 27 .AND. nnearest .GE. 1) THEN
+!         ie = CellID_nearest(1)
+!         DO l = 1,3
+!          ! similar distance check as above, but only for the cell that is
+!          ! closest to the particle (1st index in nnearest)
+!          ! used ABS since distance isn't squared.
+!          ! ppiclf_interp_dchk is set to be 1.5xmax cell length per
+!          ! dimension (in SUBROUTINE ppiclf_solve_InterpTupleTransfer)
+!          IF(ppiclf_linperiodic(l) .AND.
+!     >                            ppiclf_EqualDomain(l)) THEN
+!            dl = ABS(MIN((ppiclf_picl_grid(l,ie) - xp(l)), 
+!     >             (binblength(l)-ABS(ppiclf_picl_grid(l,ie)
+!     >              - xp(l)))))
+!          ELSE
+!            dl = ABS(ppiclf_picl_grid(l,ie) - xp(l))
+!          END IF
+!          ! Ensure particle is within 1/2 cell distance of one cell.
+!          IF(dl .GT. ppiclf_interp_dchk(l)/1.5D0*0.5D0) remove = .TRUE.
+!         END DO
+!        END IF
 
         IF (remove) THEN
           ! Particle is outside of fluid domain.
