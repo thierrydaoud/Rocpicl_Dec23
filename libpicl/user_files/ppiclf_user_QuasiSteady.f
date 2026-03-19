@@ -30,7 +30,7 @@
       integer*4 i
       real*8 gamma
       real*8 rcd1,rmacr,rcd_mcr,rcd_std,rmach_rat,rcd_M1,
-     >   rcd_M2,C1,C2,C3,f1M,f2M,f3M,lrep,factor,cd,beta,phi_corr
+     >   rcd_M2,C1,C2,C3,f1M,f2M,f3M,lrep,factor,cd,beta,phi_corr,phi
 
 !
 ! Code:
@@ -138,7 +138,7 @@
       real*8 gamma
       real*8 rcd1,rmacr,rcd_mcr,rcd_std,rmach_rat,rcd_M1,
      >   rcd_M2,C1,C2,C3,f1M,f2M,f3M,lrep,factor,cd,beta,phi_corr,
-     >   b1,b2,b3
+     >   b1,b2,b3,phi
 
 !
 ! Code:
@@ -255,7 +255,7 @@
 !
       integer*4 i
       real*8 gamma,Knp,fKn,CD1,s,JM,CD2,
-     >   cd_loth,CM,GM,HM,b1,b2,b3,cd,beta
+     >   cd_loth,CM,GM,HM,b1,b2,b3,cd,beta,phi
       real*8 sgby2, JMt
 
 !
@@ -368,7 +368,7 @@
 
 ! Internal variables
       integer*4 i
-      real*8 cd, beta, phifRep, phif
+      real*8 cd, beta, phifRep, phif, phi
 !
 ! Code:
 

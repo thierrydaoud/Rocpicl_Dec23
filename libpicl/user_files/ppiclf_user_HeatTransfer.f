@@ -14,7 +14,7 @@
 !
 !-----------------------------------------------------------------------
 !
-      subroutine ppiclf_user_HT_driver(i,qq)
+      subroutine ppiclf_user_HT_driver(i,Nuss,qq)
 !
       implicit none
 !

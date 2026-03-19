@@ -170,13 +170,14 @@ SUBROUTINE RFLU_TimeStepping(dTimeSystem,dIterSystem,regions)
 
 ! rprop5: 0 - Storing Force Models
 
-! map: 22
+! map: 31
 !--- Particle Volume Fraction Feedback
 !--- x,y,z Forces Feedback
 !---Energy Feedback
 !--- More VF quanities. ***NEED TO CONFIRM THEY ARE USED ***
 !--- Reynolds Subgrid Stress Tensor
 !--- Pseudo Turbulent Kinetic Energy
+!--- Alpha Term Pseudo Turbulent Heat Flux
 
 
 

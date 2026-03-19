@@ -53,7 +53,7 @@
       real*8 fqsx, fqsy, fqsz
       real*8 fqsforce
       real*8 fqs_fluct(3)
-      real*8 xi_par, xi_perp, xi_T
+      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), T_par(3), alpha_PT(3,3)
       real*8 famx, famy, famz 
       real*8 fdpdx, fdpdy, fdpdz
       real*8 fdpvdx, fdpvdy, fdpvdz
@@ -78,7 +78,7 @@
       integer*4 store_forces
 
 ! Needed for heat transfer
-      real*8 qq, rmass_therm, temp, qq_du
+      real*8 qq, rmass_therm, temp, qq_du, Nuss
 
 ! Needed for reactive particles
       integer*4 burnrate_model
@@ -186,10 +186,10 @@
          endif
       endif
 
-      rpi        = acos(-1.0d0)
-      rcp_part   = ppiclf_rcp_part
-      rpr        = 0.70d0
-      rcp_fluid  = 1004.64d0
+      rpi         = acos(-1.0d0) ! 3.1415...
+      rcp_part    = ppiclf_rcp_part 
+      rpr         = 0.70d0 ! Prandtl Number
+      rcp_fluid   = 1004.64d0 ! Fluid Specific Heat at const pressure
 
       fac = ppiclf_rk3dtrk(iStage)*ppiclf_dt
       if (1==2) then
@@ -353,13 +353,13 @@
          taux = 0.0d0; tauy = 0.0d0; tauz = 0.0d0;
          liftx = 0.0d0; lifty = 0.0d0; liftz = 0.0d0;
          fvux = 0.0d0; fvuy = 0.0d0; fvuz = 0.0d0;
-         qq=0.0d0; qq_du=0.0d0
+         qq=0.0d0; qq_du=0.0d0; Nuss = 0.0d0
          mdot_me = 0.0d0; mdot_ox = 0.0d0;
          upmean = 0.0; vpmean = 0.0; wpmean = 0.0;
          u2pmean = 0.0; v2pmean = 0.0; w2pmean = 0.0;
          fdpvdx = 0.0d0; fdpvdy = 0.0d0; fdpvdz = 0.0d0;
          !--- Added for PseudoTurbulence
-         Rsg = 0.0d0; T_par = 0.0d0
+         Rsg = 0.0d0; T_par = 0.0d0; alpha_PT = 0.0d0
 
 !
 ! Step 1a: New Added-Mass model of Briney
@@ -383,8 +383,7 @@
 ! Step 1b: Call NearestNeighbor if particles i and j interact
 !
          if ((am_flag==2).or.(collisional_flag>=1)
-     >          .or.(qs_fluct_flag>=1)
-     >          .or.(pseudoTurb_flag==1)) then
+     >          .or.(qs_fluct_flag>=1)) then
 
          !AVERY - we should fix vmag ~0 bug and remove conditional check
          if ((qs_fluct_flag>=1) .and. (vmag .gt. 1.d-8)) then
@@ -476,10 +475,10 @@
          !   and is called above in Step 1b
          if (qs_fluct_flag==1) then
             call ppiclf_user_QS_fluct_Lattanzi(i,iStage,fqs_fluct)
-         elseif (qs_fluct_flag==2 .or. pseudoTurb_flag==1) then
-            call ppiclf_user_QS_fluct_Osnes(i,iStage,fqs_fluct,
-     >                                     xi_par,xi_perp,xi_T,
-     >                                      fqsx, fqsy, fqsz)
+         elseif (qs_fluct_flag==2) then
+            call ppiclf_user_QS_fluct_Osnes(i,iStage,fqs_fluct)
+         else
+           call ppiclf_exittr('Unknown QS Fluct Flag$', 0.0d0, 0)
          endif
 
          ! Add fluctuation part to quasi-steady force
@@ -492,12 +491,6 @@
          ppiclf_rprop(PPICLF_R_FLUCTFY,i) = fqs_fluct(2)
          ppiclf_rprop(PPICLF_R_FLUCTFZ,i) = fqs_fluct(3)
          
-         ! Store normally distributed random variables xi for PseudoTurbulence
-         ppiclf_rprop(PPICLF_R_XIPAR,i)  = xi_par
-         ppiclf_rprop(PPICLF_R_XIPERP,i) = xi_perp
-         ppiclf_rprop(PPICLF_R_XIT,i)    = xi_T
-
-
 !
 ! Step 4: Force component added mass
 !
@@ -621,7 +614,7 @@
 ! Step 8b: Heat transfer model
 !
          if (heattransfer_flag >= 1) then
-            call ppiclf_user_HT_driver(i,qq)
+            call ppiclf_user_HT_driver(i,Nuss,qq)
          endif ! heattransfer_flag >= 1
 
 !
@@ -650,6 +643,37 @@
             call ppiclf_user_Lift_driver(i,iStage,liftx,lifty,liftz)
          endif ! collisional_flag == 4
 
+!
+! Step 10: Pseudo-Turbulence (PT) Models
+!          Calculate Reynolds Stress Tensor (Rsg), 
+!          and PT-Heat Flux (Qsg)
+
+         ! 03/16/2026 - Thierry - I don't think we need all 3 checks for
+         ! the future, but I need that for PseudoTurbulence paper
+         ! Ideally, the user should either include all therms, or none. 
+         if(pseudoTurb_flag .gt. 0) then
+!           ! Rsg = 0, Qsg = 0 
+!           call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
+!     >                                 xi_par,xi_perp,xi_T,
+!     >                                 Rsg, T_par, alpha_PT)
+!         elseif(pseudoTurb_flag==1) then
+!           ! Rsg !=0, Qsg = 0
+!           call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
+!     >                                 xi_par,xi_perp,xi_T,
+!     >                                 Rsg, T_par, alpha_PT)
+!         elseif(pseudoTurb_flag==2) then
+           ! All included
+           call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
+     >                                 xi_par,xi_perp,xi_T,
+     >                                 Rsg, T_par, alpha_PT)
+         else
+           call ppiclf_exittr('Unknown PseudoTurb$', 0.0d0, 0)
+         endif
+
+         ! Store normally distributed random variables xi for PseudoTurbulence
+         ppiclf_rprop(PPICLF_R_XIPAR,i)  = xi_par
+         ppiclf_rprop(PPICLF_R_XIPERP,i) = xi_perp
+         ppiclf_rprop(PPICLF_R_XIT,i)    = xi_T
 !
 ! Step 10: Set ydot for all PPICLF_SLN number of equations
 !
@@ -712,31 +736,28 @@
           ppiclf_feedbk(PPICLF_P_JFZ,i) = ppiclf_rprop(PPICLF_R_JSPL,i)*
      >      (ppiclf_ydot(PPICLF_JVZ,i)*rmass - fcz)
 
+          IF(pseudoTurb_flag==0) THEN
           ! Energy equation feedback term
-          ! 09/19/2025 - Thierry - Added Lift force
-          ! Still need to add Torue \cdot angular velocity
-          ppiclf_feedbk(PPICLF_P_JE,i) = ppiclf_rprop(PPICLF_R_JSPL,i)
-     >     * ( (fqsx+fvux+liftx)*ppiclf_y(PPICLF_JVX,i) + 
-     >         (fqsy+fvuy+lifty)*ppiclf_y(PPICLF_JVY,i) + 
-     >         (fqsz+fvuz+liftz)*ppiclf_y(PPICLF_JVZ,i) +
-     >                famx*ppiclf_rprop(PPICLF_R_JUX,i) +
-     >                famy*ppiclf_rprop(PPICLF_R_JUY,i) +
-     >                famz*ppiclf_rprop(PPICLF_R_JUZ,i) +
-     >                taux_hydro*ppiclf_y(PPICLF_JOX,i) +
-     >                tauy_hydro*ppiclf_y(PPICLF_JOY,i) +
-     >                tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
-     >         qq )
-          IF(pseudoTurb_flag==1) THEN
+            ppiclf_feedbk(PPICLF_P_JE,i) = ppiclf_rprop(PPICLF_R_JSPL,i)
+     >       * ( (fqsx+fvux+liftx)*ppiclf_y(PPICLF_JVX,i) + 
+     >           (fqsy+fvuy+lifty)*ppiclf_y(PPICLF_JVY,i) + 
+     >           (fqsz+fvuz+liftz)*ppiclf_y(PPICLF_JVZ,i) +
+     >                  famx*ppiclf_rprop(PPICLF_R_JUX,i) +
+     >                  famy*ppiclf_rprop(PPICLF_R_JUY,i) +
+     >                  famz*ppiclf_rprop(PPICLF_R_JUZ,i) +
+     >                  taux_hydro*ppiclf_y(PPICLF_JOX,i) +
+     >                  tauy_hydro*ppiclf_y(PPICLF_JOY,i) +
+     >                  tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
+     >           qq )
+          ELSEIF(pseudoTurb_flag==1) THEN
             ! 09/02/2025 -  Addition of PTKE to Rocflu's Energy Equation
             ppiclf_feedbk(PPICLF_P_JE,i) = ppiclf_rprop(PPICLF_R_JSPL,i)
      >       * ( (fqsx+fvux+famx+liftx)*ppiclf_y(PPICLF_JVX,i) + 
      >           (fqsy+fvuy+famy+lifty)*ppiclf_y(PPICLF_JVY,i) + 
      >           (fqsz+fvuz+famz+liftz)*ppiclf_y(PPICLF_JVZ,i) +
      >           qq )
-          ELSE
-            Rsg   = 0.0D0
-            T_par = 0.0D0
           END IF ! pseudoTurb_flag
+
           ! 07/21/2025 - Thierry - Added Reynolds Subgrid Stress Feedback
           ppiclf_feedbk(PPICLF_P_JRSG11,i) = Rsg(1,1) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
@@ -762,6 +783,26 @@
           ppiclf_feedbk(PPICLF_P_JTSG2,i) = T_par(2) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JTSG3,i) = T_par(3) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+
+          ! 03/17/2026 - Thierry - Pseudo Turbulent Heat Flux Projection
+          ppiclf_feedbk(PPICLF_P_JAlphaPT11,i) = alpha_PT(1,1) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT12,i) = alpha_PT(1,2) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT13,i) = alpha_PT(1,3) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT21,i) = alpha_PT(2,1) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT22,i) = alpha_PT(2,2) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT23,i) = alpha_PT(2,3) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT31,i) = alpha_PT(3,1) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT32,i) = alpha_PT(3,2) 
+     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+          ppiclf_feedbk(PPICLF_P_JAlphaPT33,i) = alpha_PT(3,3)  
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
 
         END IF ! Feedback flag
@@ -815,6 +856,7 @@
 
 
 
+! 03/17/2026 - Thierry - This is not used. Probably delete in the future
 !
 ! Step 13: Store forces
 

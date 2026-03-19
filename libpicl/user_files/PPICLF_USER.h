@@ -1,12 +1,12 @@
-#define PPICLF_LPART 80000
+#define PPICLF_LPART 20000
 #define PPICLF_LRS 12
 #define PPICLF_LRP 48
 #define PPICLF_LRP2 0
 #define PPICLF_LRP4 0
 #define PPICLF_LRP5 0
-#define PPICLF_LEE 120000
+#define PPICLF_LEE 50000
 #define PPICLF_LRP_INT 30
-#define PPICLF_LRP_PRO 22
+#define PPICLF_LRP_PRO 31
 
 ! number of timesteps kept in history kernels
 
@@ -132,3 +132,13 @@
 #define PPICLF_P_JTSG1 20
 #define PPICLF_P_JTSG2 21
 #define PPICLF_P_JTSG3 22
+!--- Alpha Term Pseudo Turbulent Heat Flux
+#define PPICLF_P_JAlphaPT11 23
+#define PPICLF_P_JAlphaPT12 24
+#define PPICLF_P_JAlphaPT13 25
+#define PPICLF_P_JAlphaPT21 26
+#define PPICLF_P_JAlphaPT22 27
+#define PPICLF_P_JAlphaPT23 28
+#define PPICLF_P_JAlphaPT31 29
+#define PPICLF_P_JAlphaPT32 30
+#define PPICLF_P_JAlphaPT33 31

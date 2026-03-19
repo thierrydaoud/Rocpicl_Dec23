@@ -117,13 +117,14 @@ SUBROUTINE PICL_TEMP_InitSolver( pRegion)
 
 ! rprop5: 0 - Storing Force Models
 
-! map: 22
+! map: 31
 !--- Particle Volume Fraction Feedback
 !--- x,y,z Forces Feedback
 !---Energy Feedback
 !--- More VF quanities. ***NEED TO CONFIRM THEY ARE USED ***
 !--- Reynolds Subgrid Stress Tensor
 !--- Pseudo Turbulent Kinetic Energy
+!--- Alpha Term Pseudo Turbulent Heat Flux
 
 
 
@@ -176,8 +177,8 @@ INTEGER :: errorFlag,icg
                    yMaxCell,zMinCell,zMaxCell,x,vFrac,volpclsum,xLoc,yLoc,zLoc,yL, &
                    zpf_factor,xpf_factor,dp,neighborWidth,xp_min,xp_max, &
                    yp_min, yp_max, zp_min, zp_max, MinFluidCells, maxVF
-   REAL(RFREAL) :: y(12, 80000), &
-                   rprop(48, 80000)
+   REAL(RFREAL) :: y(12, 20000), &
+                   rprop(48, 20000)
    REAL(RFREAL), DIMENSION(:,:), ALLOCATABLE :: rocGrid 
    REAL(RFREAL), DIMENSION(:,:), ALLOCATABLE :: xGrid, yGrid, zGrid
    REAL(RFREAL),ALLOCATABLE,DIMENSION(:) :: xData,yData,zData,rData,dumData    
@@ -263,6 +264,7 @@ qs_fluct_flag = global%piclQsFluctFlag
 ppiclf_debug = global%piclDebug
 sbNearest_flag = global%piclSBNearFlag
 burnrate_flag = global%piclBurnRateFlag
+pseudoTurb_flag = global%piclPseudoTurbFlag
 
 rmu_flag = pRegion%mixtInput%viscModel
 rmu_ref = pRegion%mixtInput%refVisc
@@ -277,6 +279,12 @@ erest = global%piclERest
 
 qs_fluct_filter_flag = global%piclQsFluctFilterFlag
 qs_fluct_filter_adapt_flag = global%piclQsFluctFilterAdaptFlag
+
+! Pseudo-Turbulence needs QS Fluctuations
+if((qs_fluct_flag .lt. 2) .and. (pseudoTurb_flag .gt. 0)) then
+  CALL ErrorStop(global,ERR_PICL_INVALID_PTFLAG,233,'Wrong Fluct Flag')
+endif
+
 
 x_per_flag = global%piclPeriodicXFlag 
 ! Find min/max grid coordinates across MPI ranks
@@ -318,7 +326,7 @@ ang_per_xangle = global%piclAngularPeriodicXAngle * pi / 180.0D0
 
 ! Sanity check for viscosity
 IF(rmu_ref .LT. 0.0d0) THEN
-    CALL ErrorStop(global,ERR_PICL_INVALID_VISC,270,&
+    CALL ErrorStop(global,ERR_PICL_INVALID_VISC,277,&
         'Negative viscosity for ppiclF')
 END IF
 
@@ -364,7 +372,7 @@ IF(global%restartFromScratch) THEN
    OPEN(iFile,FILE=iFileName,FORM="FORMATTED",STATUS="OLD",IOSTAT=errorFlag)
    global%error = errorFlag   
    IF( global%error /= ERR_NONE ) THEN 
-      CALL ErrorStop(global,ERR_FILE_OPEN,316,iFileName)
+      CALL ErrorStop(global,ERR_FILE_OPEN,323,iFileName)
    END IF
 
    ! check for comments at beginning of file
@@ -378,8 +386,8 @@ IF(global%restartFromScratch) THEN
    BACKSPACE(iFile, IOSTAT=ErrorFlag)
   
    READ(iFile,*) npart ! global number of particles
-   IF (npart .gt. 80000*global%nProcs) THEN
-      CALL ErrorStop(global,ERR_ILLEGAL_VALUE,331,'PPICLF:too &
+   IF (npart .gt. 20000*global%nProcs) THEN
+      CALL ErrorStop(global,ERR_ILLEGAL_VALUE,338,'PPICLF:too &
         many particles to initialize')
    END IF
   
@@ -390,7 +398,7 @@ IF(global%restartFromScratch) THEN
    i_global_max = npart_local*(global%myProcid+1)
    IF(i_global_max > npart) i_global_max = npart
 
-   rprop(1:48,1:80000) = 0.0D0
+   rprop(1:48,1:20000) = 0.0D0
    dp_max = 0.0D0
    xp_min =  17400000.0
    yp_min =  17400000.0
@@ -431,7 +439,7 @@ IF(global%restartFromScratch) THEN
                   ppiclf_rcp_part = material%spht
                ELSE
                  PRINT*, 'Material Specific Heat not found in input file' 
-                 CALL ErrorStop(global,ERR_INRT_MISSPLAGMAT,383,matName)
+                 CALL ErrorStop(global,ERR_INRT_MISSPLAGMAT,390,matName)
                ENDIF
                rhop = material%dens
                foundMat = .TRUE.
@@ -441,7 +449,7 @@ IF(global%restartFromScratch) THEN
 
          IF(.NOT. foundMat) THEN
             print*,global%myProcid,'stopping foundMat = False'
-            CALL ErrorStop(global,ERR_INRT_MISSPLAGMAT,393,matName)
+            CALL ErrorStop(global,ERR_INRT_MISSPLAGMAT,400,matName)
          END IF
 
          IF ( global%myProcid == MASTERPROC) then
@@ -524,7 +532,7 @@ IF(global%restartFromScratch) THEN
    CLOSE(iFile, IOSTAT=errorFlag)
    global%error = errorFlag   
    IF ( global%error /= ERR_NONE ) THEN 
-      CALL ErrorStop(global,ERR_FILE_CLOSE,476,iFileName)
+      CALL ErrorStop(global,ERR_FILE_CLOSE,483,iFileName)
    END IF ! global%error  
 ELSE
 !  This is for a restart
@@ -547,7 +555,7 @@ ELSE
    ENDIF
 
    IF(ii .lt. 0) THEN
-      CALL ErrorStop(global,ERR_FILE_EXIST,499,vtuFile)
+      CALL ErrorStop(global,ERR_FILE_EXIST,506,vtuFile)
    END IF
 
    npart = -1
@@ -574,24 +582,24 @@ nCells = pRegion%grid%nCells
 ALLOCATE(xGrid(8,nCells),STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_ALLOCATE,526,'PPICLF:xGrid')
+  CALL ErrorStop(global,ERR_ALLOCATE,533,'PPICLF:xGrid')
 END IF ! global%error
 
 ALLOCATE(yGrid(8,nCells),STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_ALLOCATE,532,'PPICLF:yGrid')
+  CALL ErrorStop(global,ERR_ALLOCATE,539,'PPICLF:yGrid')
 END IF ! global%error
 
 ALLOCATE(zGrid(8,nCells),STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_ALLOCATE,538,'PPICLF:zGrid')
+  CALL ErrorStop(global,ERR_ALLOCATE,545,'PPICLF:zGrid')
 END IF ! global%error
 
 ALLOCATE(rocGrid(7,nCells),STAT=errorFlag)
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_ALLOCATE,543,'PPICLF:rocGrid')
+  CALL ErrorStop(global,ERR_ALLOCATE,550,'PPICLF:rocGrid')
 END IF ! global%error
 
 
@@ -618,7 +626,7 @@ DO i = 1, nCells
   ELSE
     CellVertices = 0
     WRITE(*,*) 'ERROR: Rocflupicl only support tetrahedral and hexahedral cell types.'
-    CALL ErrorStop(global,ERR_ALLOCATE,570,'PPICLF:CellLen')
+    CALL ErrorStop(global,ERR_ALLOCATE,577,'PPICLF:CellLen')
   END IF
 END DO
 ! Find cell lengths
@@ -633,7 +641,7 @@ DO i = 1,nCells
   ELSE
     CellVertices = 0
     WRITE(*,*) 'ERROR: Rocflupicl only support tetrahedral and hexahedral cell types.'
-    CALL ErrorStop(global,ERR_ALLOCATE,585,'PPICLF:CellLen')
+    CALL ErrorStop(global,ERR_ALLOCATE,592,'PPICLF:CellLen')
   END IF
   ! Initialize as zero for each cell
   DO l = 1,3
@@ -735,7 +743,7 @@ CALL ppiclf_solve_Initialize( &
 ! *** AVERY - Update when general ang per is done ***
 IF(((ang_per_flag.eq.1) .and. (x_per_flag.eq.1 .or. y_per_flag.eq.1)) .or. & 
     (ang_per_flag .gt. 1)) THEN
-    CALL ErrorStop(global,ERR_PICL_INVALID_PERIODICITY,687,&
+    CALL ErrorStop(global,ERR_PICL_INVALID_PERIODICITY,694,&
       'Wrong periodicity choices for ppiclF')
 END IF 
 
@@ -761,32 +769,32 @@ END IF
 DEALLOCATE(rocGrid,STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_DEALLOCATE,713,'PPICLF:rocGrid')
+  CALL ErrorStop(global,ERR_DEALLOCATE,720,'PPICLF:rocGrid')
 END IF ! global%error
 
 
 DEALLOCATE(xGrid,STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_DEALLOCATE,720,'PPICLF:xGrid')
+  CALL ErrorStop(global,ERR_DEALLOCATE,727,'PPICLF:xGrid')
 END IF ! global%error
 
 DEALLOCATE(yGrid,STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_DEALLOCATE,726,'PPICLF:yGrid')
+  CALL ErrorStop(global,ERR_DEALLOCATE,733,'PPICLF:yGrid')
 END IF ! global%error
 
 DEALLOCATE(zGrid,STAT=errorFlag)
 global%error = errorFlag
 IF ( global%error /= ERR_NONE ) THEN
-  CALL ErrorStop(global,ERR_DEALLOCATE,732,'PPICLF:zGrid')
+  CALL ErrorStop(global,ERR_DEALLOCATE,739,'PPICLF:zGrid')
 END IF ! global%error
 
 ALLOCATE(volp(nCells),STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_ALLOCATE,738,'PPICLF:volp')
+      CALL ErrorStop(global,ERR_ALLOCATE,745,'PPICLF:volp')
     END IF ! global%error
 
 DO i=1,pGrid%nCellsTot
@@ -798,7 +806,7 @@ DO i = 1, nCells
        CALL ppiclf_solve_GetProFld(i, 1, volp(i))
        IF (pRegion%mixtInput%axiFlag) THEN
            WRITE(*,*) "Need to properly implement axi-sym for phip init."
-           CALL ErrorStop(global,ERR_OPTION_TYPE,750,'PPICLF:axi')
+           CALL ErrorStop(global,ERR_OPTION_TYPE,757,'PPICLF:axi')
        END IF
        volp(i) = volp(i)/pRegion%grid%vol(i)
        pRegion%mixt%piclVF(i) = volp(i) 
@@ -830,14 +838,14 @@ DO icg = 1,pGrid%nCellsTot
     IF(pRegion%mixt%cv(CV_MIXT_DENS,icg) .le. 0.0) THEN
          WRITE(*,*) "Error: negative density: ",pRegion%mixt%cv(CV_MIXT_DENS,icg)     
          PRINT*, 'From rocpicl/PICL_TEMP_InitSolver.F90' 
-         CALL ErrorStop(global,ERR_INVALID_VALUE,782,'PPICLF:init')
+         CALL ErrorStop(global,ERR_INVALID_VALUE,789,'PPICLF:init')
     END IF    
 END DO ! icg
 
 DEALLOCATE(volp,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,789,'PPICLF:zGrid')
+      CALL ErrorStop(global,ERR_DEALLOCATE,796,'PPICLF:zGrid')
     END IF ! global%error
 
 

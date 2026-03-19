@@ -27,6 +27,7 @@ SRC = $(SOURCE_ROOT_USER)/ppiclf_user.f     \
       $(SOURCE_ROOT_USER)/ppiclf_user_unitproblems.f     \
       $(SOURCE_ROOT_USER)/ppiclf_user_QuasiSteady.f     \
       $(SOURCE_ROOT_USER)/ppiclf_user_Fluctuations.f     \
+      $(SOURCE_ROOT_USER)/ppiclf_user_PseudoTurbulence.f     \
       $(SOURCE_ROOT_USER)/ppiclf_user_AddedMass.f     \
       $(SOURCE_ROOT_USER)/Added_Mass/ppiclf_user_AddedMass_functions.f   \
       $(SOURCE_ROOT_USER)/Added_Mass/ppiclf_user_AddedMass_subroutines.f   \
@@ -48,6 +49,7 @@ OBJ = $(SOURCE_ROOT_USER)/ppiclf_user.o     \
       $(SOURCE_ROOT_USER)/ppiclf_user_unitproblems.o     \
       $(SOURCE_ROOT_USER)/ppiclf_user_QuasiSteady.o     \
       $(SOURCE_ROOT_USER)/ppiclf_user_Fluctuations.o     \
+      $(SOURCE_ROOT_USER)/ppiclf_user_PseudoTurbulence.o     \
       $(SOURCE_ROOT_USER)/ppiclf_user_AddedMass.o     \
       $(SOURCE_ROOT_USER)/Added_Mass/ppiclf_user_AddedMass_functions.o   \
       $(SOURCE_ROOT_USER)/Added_Mass/ppiclf_user_AddedMass_subroutines.o   \

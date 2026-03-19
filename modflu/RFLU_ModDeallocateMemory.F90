@@ -466,6 +466,7 @@ SUBROUTINE RFLU_DeallocateMemorySolCv(pRegion)
     DEALLOCATE(pRegion%mixt%piclKsg,STAT=errorFlag)
     DEALLOCATE(pRegion%mixt%piclPhiQsg,STAT=errorFlag)
     DEALLOCATE(pRegion%mixt%piclGradPhiQsg,STAT=errorFlag)
+    DEALLOCATE(pRegion%mixt%piclgradTg,STAT=errorFlag)
     ! 03/19/2025 - Thierry - ends here 
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN

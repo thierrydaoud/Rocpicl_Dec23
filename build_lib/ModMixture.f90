@@ -189,6 +189,8 @@ MODULE ModMixture
     REAL(RFREAL), DIMENSION(:,:), POINTER :: piclFeedback
     REAL(RFREAL), DIMENSION(:,:,:), POINTER :: piclgradFeedback
     ! 04/01/2025 - TLJ - ends here
+    ! 03/18/2026 - Thierry - adding gradient of T_g
+    REAL(RFREAL), DIMENSION(:,:,:), POINTER :: piclgradTg
 
     REAL(RFREAL) :: piclGeom    
 

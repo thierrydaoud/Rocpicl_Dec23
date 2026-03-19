@@ -522,6 +522,8 @@ SUBROUTINE RFLU_AllocateMemorySolCv(pRegion)
      ALLOCATE(pRegion%mixt%piclKsg(pGrid%nCellsTot),STAT=errorFlag)
      ALLOCATE(pRegion%mixt%piclPhiQsg(3,pGrid%nCellsTot),STAT=errorFlag)
      ALLOCATE(pRegion%mixt%piclGradPhiQsg(3,3,pGrid%nCellsTot),STAT=errorFlag)
+     ! 03/18/2026 - Thierry - Added gradient of T_g
+     ALLOCATE(pRegion%mixt%piclgradTg(3,1,pGrid%nCellsTot),STAT=errorFlag)
      global%error = errorFlag
      IF (global%error /= ERR_NONE) THEN
         CALL ErrorStop(global,ERR_ALLOCATE,__LINE__,'pRegion%mixt%piclfVF')

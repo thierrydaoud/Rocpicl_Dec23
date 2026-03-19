@@ -432,6 +432,7 @@ MODULE ModError
   INTEGER, PARAMETER :: ERR_PICL_FWIDTH_UNDEF          = 8002
   INTEGER, PARAMETER :: ERR_PICL_INVALID_VISC          = 8003
   INTEGER, PARAMETER :: ERR_PICL_INVALID_PERIODICITY   = 8004
+  INTEGER, PARAMETER :: ERR_PICL_INVALID_PTFLAG   = 8005
 
 ! ==============================================================================
 ! Program burn specific errors
@@ -698,6 +699,8 @@ MODULE ModError
           message = 'PERIODICX and PERIODICY need to be 0 when using &
                      Z-Axis Angular Periodicity. ANGULARPERIODIC cannot &
                      be greater than 1'
+        CASE(ERR_PICL_INVALID_PTFLAG)
+          message = 'Must use Fluctuation Flag 2 with Pseudo Turbulence'
 
 ! ------------------------------------------------------------------------------
 !       Posivity/validity checking

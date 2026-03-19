@@ -212,6 +212,7 @@ qs_fluct_flag = global%piclQsFluctFlag
 ppiclf_debug = global%piclDebug
 sbNearest_flag = global%piclSBNearFlag
 burnrate_flag = global%piclBurnRateFlag
+pseudoTurb_flag = global%piclPseudoTurbFlag
 
 rmu_flag = pRegion%mixtInput%viscModel
 rmu_ref = pRegion%mixtInput%refVisc
@@ -226,6 +227,12 @@ erest = global%piclERest
 
 qs_fluct_filter_flag = global%piclQsFluctFilterFlag
 qs_fluct_filter_adapt_flag = global%piclQsFluctFilterAdaptFlag
+
+! Pseudo-Turbulence needs QS Fluctuations
+if((qs_fluct_flag .lt. 2) .and. (pseudoTurb_flag .gt. 0)) then
+  CALL ErrorStop(global,ERR_PICL_INVALID_PTFLAG,__LINE__,'Wrong Fluct Flag')
+endif
+
 
 x_per_flag = global%piclPeriodicXFlag 
 ! Find min/max grid coordinates across MPI ranks

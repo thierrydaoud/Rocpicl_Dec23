@@ -27,12 +27,12 @@
      >   rphif,asndf,rmachp,rhop,rhoMixt,reyL,rnu,fac,
      >   vx,vy,vz,
      >   rcp_part,rpr,
-     >   phi, mp, re, rem, rcp_fluid
+     >   mp, re, rem, rcp_fluid
       common /RFLU_user/ rpi,rmu,rkappa,rmass,vmag,rhof,dp,rep,rphip,
      >   rphif,asndf,rmachp,rhop,rhoMixt,reyL,rnu,fac,
      >   vx,vy,vz,
      >   rcp_part,rpr,
-     >   phi,mp,re, rem, rcp_fluid
+     >   mp,re, rem, rcp_fluid
 
 !
 ! For misc values
@@ -47,12 +47,11 @@
       integer*4 icpmean
       real*8 upmean, vpmean, wpmean, phipmean
       real*8 u2pmean, v2pmean, w2pmean
+      real*8 UnifRnd(6)
       common /user_fluct01/ icpmean
       common /user_fluct02/ upmean, vpmean, wpmean, phipmean
       common /user_fluct03/ u2pmean, v2pmean, w2pmean
-
-      real*8 UnifRnd(6), Rsg(3,3), T_par(3)
-      common /user_fluct02/ UnifRnd, Rsg, T_par
+      common /user_fluct04/ UnifRnd
 
 
 !
