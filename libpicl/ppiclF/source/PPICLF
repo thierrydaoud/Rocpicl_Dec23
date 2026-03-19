@@ -1,7 +1,6 @@
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
 ! rprop: 48
@@ -14,15 +13,15 @@
 !--- Reynolds Subgrid Stress Tensor
 !--- Pseudo Turbulent Kinetic Energy
 ! Computational particles
-      REAL*8 PPICLF_Y (12 ,80000) ! Solution
-     > ,PPICLF_YDOT (12 ,80000) ! Total solution RHS
-     > ,PPICLF_YDOTC (12 ,80000) ! Coupled solution RHS
-     > ,PPICLF_RPROP (48 ,80000) ! Real particle properties
-     > ,PPICLF_RPROP2(0,80000) ! Secondary real particle properties
-     > ,PPICLF_RPROP3(0,80000) ! Third real particle properties
-     > ,PPICLF_RPROP4(0,80000) ! Fourth real particle properties
-     > ,PPICLF_RPROP5(0,80000) ! Fifth real particle properties
-     > ,PPICLF_FEEDBK(22,80000) !Feedback particle terms
+      REAL*8 PPICLF_Y (12 ,20000) ! Solution
+     > ,PPICLF_YDOT (12 ,20000) ! Total solution RHS
+     > ,PPICLF_YDOTC (12 ,20000) ! Coupled solution RHS
+     > ,PPICLF_RPROP (48 ,20000) ! Real particle properties
+     > ,PPICLF_RPROP2(0,20000) ! Secondary real particle properties
+     > ,PPICLF_RPROP3(10*50,20000) ! Third real particle properties
+     > ,PPICLF_RPROP4(0,20000) ! Fourth real particle properties
+     > ,PPICLF_RPROP5(0,20000) ! Fifth real particle properties
+     > ,PPICLF_FEEDBK(22,20000) !Feedback particle terms
       COMMON /PPICLF_SLN_CURRENT_R/ PPICLF_Y
      > ,PPICLF_YDOT
      > ,PPICLF_YDOTC
@@ -32,21 +31,21 @@
      > ,PPICLF_RPROP4
      > ,PPICLF_RPROP5
      > ,PPICLF_FEEDBK
-      INTEGER*4 PPICLF_IPROP(11,80000) ! Integer particle properties
+      INTEGER*4 PPICLF_IPROP(11,20000) ! Integer particle properties
       COMMON /PPICLF_SLN_CURRENT_I/ PPICLF_IPROP
       COMMON /PPICLF_SLN_CURRENT_N/ PPICLF_NPART
       INTEGER*4 PPICLF_NPART
 ! Previous time step solutions, may grow later
-      REAL*8 PPICLF_Y1(12, 80000)
+      REAL*8 PPICLF_Y1(12, 20000)
       COMMON /PPICLF_SLN_PREVIOUS_R/ PPICLF_Y1
 ! Previous time step solutions, may grow later
-      REAL*8 PPICLF_TIMEBH(0)
-      REAL*8 PPICLF_DRUDTPLAG(3,0,80000)
-      REAL*8 PPICLF_DRUDTMIXT(3,0,80000)
-      REAL*8 PPICLF_DTDTPLAG(0,80000)
-      REAL*8 PPICLF_DTDTMIXT(0,80000)
-      REAL*8 PPICLF_TMIXT(0,80000)
-      REAL*8 PPICLF_TPLAG(0,80000)
+      REAL*8 PPICLF_TIMEBH(50)
+      REAL*8 PPICLF_DRUDTPLAG(3,50,20000)
+      REAL*8 PPICLF_DRUDTMIXT(3,50,20000)
+      REAL*8 PPICLF_DTDTPLAG(50,20000)
+      REAL*8 PPICLF_DTDTMIXT(50,20000)
+      REAL*8 PPICLF_TMIXT(50,20000)
+      REAL*8 PPICLF_TPLAG(50,20000)
       COMMON /PPICLF_SLN_UNSTEADY/ PPICLF_TIMEBH
      > ,PPICLF_DRUDTPLAG
      > ,PPICLF_DRUDTMIXT
@@ -56,8 +55,7 @@
      > ,PPICLF_TPLAG
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
 ! rprop: 48
@@ -76,13 +74,13 @@ C Grid
      > PPICLF_PRO_FLD_PICL,PPICLF_INT_FLD_INPUT,
      > PPICLF_INT_FLD,PPICLF_FLUID_GRID,
      > PPICLF_PICL_GRID,PPICLF_PART2CELL_DIST
-      REAL*8 PPICLF_PRO_FLD(120000,22),
-     > PPICLF_PRO_FLD_PICL(22,120000),
-     > PPICLF_INT_FLD_INPUT(120000,30),
-     > PPICLF_INT_FLD(30,120000),
-     > PPICLF_FLUID_GRID (7,120000),
-     > PPICLF_PICL_GRID (7,120000),
-     > PPICLF_PART2CELL_DIST(80000,27)
+      REAL*8 PPICLF_PRO_FLD(50000,22),
+     > PPICLF_PRO_FLD_PICL(22,50000),
+     > PPICLF_INT_FLD_INPUT(50000,30),
+     > PPICLF_INT_FLD(30,50000),
+     > PPICLF_FLUID_GRID (7,50000),
+     > PPICLF_PICL_GRID (7,50000),
+     > PPICLF_PART2CELL_DIST(20000,27)
       COMMON /PPICLF_GRID_BIN_MAP_I/PPICLF_CELL_MAP,
      > PPICLF_CELL_MAP_ORIG,PPICLF_CELL_MAP_INTERP,
      > PPICLF_CELL_MAP_PROJ,PPICLF_NCELLS_FV2PICL,
@@ -90,22 +88,21 @@ C Grid
      > PPICLF_NCELLS_PROJ,PPICLF_PART2CELL_MAP,
      > PPICLF_NPART2CELL
      >
-      INTEGER*4 PPICLF_CELL_MAP(6,120000),
-     > PPICLF_CELL_MAP_ORIG(6,120000),
-     > PPICLF_CELL_MAP_INTERP(6,120000),
-     > PPICLF_CELL_MAP_PROJ(6,120000),
+      INTEGER*4 PPICLF_CELL_MAP(6,50000),
+     > PPICLF_CELL_MAP_ORIG(6,50000),
+     > PPICLF_CELL_MAP_INTERP(6,50000),
+     > PPICLF_CELL_MAP_PROJ(6,50000),
      > PPICLF_NCELLS_FV2PICL, PPICLF_NCELLS_FV2PICL_ORIG,
      > PPICLF_NCELLS_INTERP, PPICLF_NCELLS_PROJ,
-     > PPICLF_PART2CELL_MAP(80000,27),
-     > PPICLF_NPART2CELL(80000)
+     > PPICLF_PART2CELL_MAP(20000,27),
+     > PPICLF_NPART2CELL(20000)
       INTEGER*4 PPICLF_NFVCELLS
       COMMON /PPICLF_GRID_ORIG_CELL_N/ PPICLF_NFVCELLS
       INTEGER*4 PPICLF_INT_ICNT, PPICLF_INT_MAP(30)
       COMMON /PPICLF_INTERP_I/ PPICLF_INT_ICNT, PPICLF_INT_MAP
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
 ! rprop: 48
@@ -146,7 +143,7 @@ c Particle options
      > ,PPICLF_IENDIAN, PPICLF_IWALLM
       REAL*8 PPICLF_FILTER(3), PPICLF_RK3COEF(3,3),
      > PPICLF_DT, PPICLF_TIME, PPICLF_NNDIST,
-     > PPICLF_INTERP_DCHK(3), PPICLF_TOTNNDIST(80000)
+     > PPICLF_INTERP_DCHK(3), PPICLF_TOTNNDIST(20000)
       REAL*8 PPICLF_RK3ARK(3), PPICLF_RK3DTRK(3)
       COMMON /PPICLF_OPT_PARAM_R/ PPICLF_FILTER
      > ,PPICLF_RK3COEF, PPICLF_DT
@@ -156,8 +153,7 @@ c Particle options
      > ,PPICLF_RK3DTRK
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
 ! rprop: 48
@@ -184,10 +180,10 @@ c Bins
       COMMON /PPICLF_PARALLEL_BIN_GLOBAL_R/ PPICLF_BINS_DX, PPICLF_BINB
      > ,PPICLF_BIN_POS, PPICLF_PREVIOUSBINB
 C Ghost particles
-      REAL*8 PPICLF_RPROP_GP(12 +48 +22,8*80000)
-     > ,PPICLF_CP_MAP(12 +48 +22,80000)
+      REAL*8 PPICLF_RPROP_GP(12 +48 +22,8*20000)
+     > ,PPICLF_CP_MAP(12 +48 +22,20000)
       COMMON /PPICLF_PARALLEL_GHOST_R/ PPICLF_RPROP_GP, PPICLF_CP_MAP
-      INTEGER*4 PPICLF_IPROP_GP(8,8*80000)
+      INTEGER*4 PPICLF_IPROP_GP(8,8*20000)
      > ,PPICLF_PARTICLEMOVED
       COMMON /PPICLF_PARALLEL_GHOST_I/ PPICLF_IPROP_GP
      > ,PPICLF_PARTICLEMOVED
@@ -195,12 +191,11 @@ C Ghost particles
       COMMON /PPICLF_PARALLEL_GHOST_N/ PPICLF_NPART_GP
       LOGICAL PPICLF_GPREQUIRED
       COMMON /PPICLF_PARALLEL_GHOST_L/ PPICLF_GPREQUIRED
-      INTEGER*4 PARTICLE_NN(80000)
+      INTEGER*4 PARTICLE_NN(20000)
       COMMON /PPICLF_PARALLEL_GHOST_N/ PARTICLE_NN
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
 ! rprop: 48
@@ -314,8 +309,7 @@ C Ghost particles
      > y_per_min, y_per_max, z_per_min, z_per_max
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
 ! rprop: 48

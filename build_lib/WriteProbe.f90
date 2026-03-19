@@ -100,8 +100,7 @@ SUBROUTINE WriteProbe( regions,iReg )
 ! number of timesteps kept in history kernels
 
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 
 ! maximum number of triangular patch boundaries
 

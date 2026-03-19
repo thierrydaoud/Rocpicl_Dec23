@@ -96,7 +96,7 @@ SUBROUTINE PICL_ReadPiclSection( global )
   INTEGER :: nVals
 
   INTEGER :: iReg
-  INTEGER, PARAMETER :: NVALS_MAX = 28
+  INTEGER, PARAMETER :: NVALS_MAX = 30
 
   CHARACTER(20) :: keys(NVALS_MAX)
 

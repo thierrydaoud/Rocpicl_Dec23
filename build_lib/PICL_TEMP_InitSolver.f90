@@ -106,8 +106,7 @@ SUBROUTINE PICL_TEMP_InitSolver( pRegion)
 ! number of timesteps kept in history kernels
 
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 
 ! maximum number of triangular patch boundaries
 
@@ -176,8 +175,8 @@ INTEGER :: errorFlag,icg
                    yMaxCell,zMinCell,zMaxCell,x,vFrac,volpclsum,xLoc,yLoc,zLoc,yL, &
                    zpf_factor,xpf_factor,dp,neighborWidth,xp_min,xp_max, &
                    yp_min, yp_max, zp_min, zp_max, MinFluidCells, maxVF
-   REAL(RFREAL) :: y(12, 80000), &
-                   rprop(48, 80000)
+   REAL(RFREAL) :: y(12, 20000), &
+                   rprop(48, 20000)
    REAL(RFREAL), DIMENSION(:,:), ALLOCATABLE :: rocGrid 
    REAL(RFREAL), DIMENSION(:,:), ALLOCATABLE :: xGrid, yGrid, zGrid
    REAL(RFREAL),ALLOCATABLE,DIMENSION(:) :: xData,yData,zData,rData,dumData    
@@ -324,7 +323,7 @@ END IF
 
  ! Initialization for viscous unsteady term
  ppiclf_nTimeBH = 1
- ppiclf_nUnsteadyData = 0
+ ppiclf_nUnsteadyData = 50
 
 ! Needed for fluctuations
 seed = 1
@@ -378,7 +377,7 @@ IF(global%restartFromScratch) THEN
    BACKSPACE(iFile, IOSTAT=ErrorFlag)
   
    READ(iFile,*) npart ! global number of particles
-   IF (npart .gt. 80000*global%nProcs) THEN
+   IF (npart .gt. 20000*global%nProcs) THEN
       CALL ErrorStop(global,ERR_ILLEGAL_VALUE,331,'PPICLF:too &
         many particles to initialize')
    END IF
@@ -390,7 +389,7 @@ IF(global%restartFromScratch) THEN
    i_global_max = npart_local*(global%myProcid+1)
    IF(i_global_max > npart) i_global_max = npart
 
-   rprop(1:48,1:80000) = 0.0D0
+   rprop(1:48,1:20000) = 0.0D0
    dp_max = 0.0D0
    xp_min =  17400000.0
    yp_min =  17400000.0
@@ -859,14 +858,14 @@ IF ( global%myProcid == MASTERPROC) then
    print*, 'qs_fluct_flag        = ',global%piclQsFluctFlag
    print*, 'ppiclf_debug         = ',global%piclDebug
    print*, 'ppiclf_nUnsteadyData = ',ppiclf_nUnsteadyData
-   print*, 'ppiclf_VU            = ',0
+   print*, 'ppiclf_VU            = ',50
    print*, 'sbNearest_flag       = ',global%piclSBNearFlag
    print*, 'burnrate_flag        = ',global%piclBurnRateFlag
 
    IF (global%piclViscousUnsteady >=1) THEN
       print*,'  Using Viscous unsteady history term'
       print*,'    ppiclf_nTimeBH       = ',ppiclf_nTimeBH
-      print*,'    ppiclf_nUnsteadyData = ',ppiclf_nUnsteadyData,0
+      print*,'    ppiclf_nUnsteadyData = ',ppiclf_nUnsteadyData,50
    ENDIF
 
    print*, ' '
