@@ -177,8 +177,8 @@ INTEGER :: errorFlag,icg
                    yMaxCell,zMinCell,zMaxCell,x,vFrac,volpclsum,xLoc,yLoc,zLoc,yL, &
                    zpf_factor,xpf_factor,dp,neighborWidth,xp_min,xp_max, &
                    yp_min, yp_max, zp_min, zp_max, MinFluidCells, maxVF
-   REAL(RFREAL) :: y(12, 20000), &
-                   rprop(48, 20000)
+   REAL(RFREAL) :: y(12, 80000), &
+                   rprop(48, 80000)
    REAL(RFREAL), DIMENSION(:,:), ALLOCATABLE :: rocGrid 
    REAL(RFREAL), DIMENSION(:,:), ALLOCATABLE :: xGrid, yGrid, zGrid
    REAL(RFREAL),ALLOCATABLE,DIMENSION(:) :: xData,yData,zData,rData,dumData    
@@ -386,7 +386,7 @@ IF(global%restartFromScratch) THEN
    BACKSPACE(iFile, IOSTAT=ErrorFlag)
   
    READ(iFile,*) npart ! global number of particles
-   IF (npart .gt. 20000*global%nProcs) THEN
+   IF (npart .gt. 80000*global%nProcs) THEN
       CALL ErrorStop(global,ERR_ILLEGAL_VALUE,338,'PPICLF:too &
         many particles to initialize')
    END IF
@@ -398,7 +398,7 @@ IF(global%restartFromScratch) THEN
    i_global_max = npart_local*(global%myProcid+1)
    IF(i_global_max > npart) i_global_max = npart
 
-   rprop(1:48,1:20000) = 0.0D0
+   rprop(1:48,1:80000) = 0.0D0
    dp_max = 0.0D0
    xp_min =  17400000.0
    yp_min =  17400000.0
@@ -852,24 +852,24 @@ DEALLOCATE(volp,STAT=errorFlag)
 IF ( global%myProcid == MASTERPROC) then
    print*, ' '
    print*, '***********************************************'
-   print*, 'TLJ'
    print*, 'Starting PICL_TEMP_InitSolver.F90'
    print*, ' '
-   print*, 'stationary           = ',global%piclStationaryFlag
-   print*, 'qs_flag              = ',global%piclQsFlag
-   print*, 'am_flag              = ',global%piclAmFlag
-   print*, 'pg_flag              = ',global%piclPgFlag
-   print*, 'collisional_flag     = ',global%piclCollisionFlag
-   print*, 'ViscousUnsteady_flag = ',global%piclViscousUnsteady
-   print*, 'heattransfer_flag    = ',global%piclHeatTransferFlag
-   print*, 'HTUnsteady_flag      = ',global%piclHTUnsteadyFlag
-   print*, 'feedback_flag        = ',global%piclFeedbackFlag
-   print*, 'qs_fluct_flag        = ',global%piclQsFluctFlag
-   print*, 'ppiclf_debug         = ',global%piclDebug
-   print*, 'ppiclf_nUnsteadyData = ',ppiclf_nUnsteadyData
-   print*, 'ppiclf_VU            = ',0
-   print*, 'sbNearest_flag       = ',global%piclSBNearFlag
-   print*, 'burnrate_flag        = ',global%piclBurnRateFlag
+   print*, 'Stationary                  = ',global%piclStationaryFlag
+   print*, 'QS Flag                     = ',global%piclQsFlag
+   print*, 'QS Fluct Flag               = ',global%piclQsFluctFlag
+   print*, 'Pseudo Turbulence Flag      = ',pseudoTurb_flag
+   print*, 'Added Mass Flag             = ',global%piclAmFlag
+   print*, 'Pressure Gradient Flag      = ',global%piclPgFlag
+   print*, 'Collisions Flag             = ',global%piclCollisionFlag
+   print*, 'Viscous-Unsteady Flag       = ',global%piclViscousUnsteady
+   print*, 'Average Heat Transfer Flag  = ',global%piclHeatTransferFlag
+   print*, 'Unsteady Heat Transfer Flag = ',global%piclHTUnsteadyFlag
+   print*, 'Feedback Flag               = ',global%piclFeedbackFlag
+   print*, 'ppiclF DEBUG Flag           = ',global%piclDebug
+   print*, 'ppiclf_nUnsteadyData        = ',ppiclf_nUnsteadyData
+   print*, 'ppiclf_VU                   = ',0
+   print*, 'SubBin Nearest Flag         = ',global%piclSBNearFlag
+   print*, 'Burn Rate Flag              = ',global%piclBurnRateFlag
 
    IF (global%piclViscousUnsteady >=1) THEN
       print*,'  Using Viscous unsteady history term'

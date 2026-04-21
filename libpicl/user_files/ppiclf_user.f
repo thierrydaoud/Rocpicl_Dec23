@@ -53,7 +53,7 @@
       real*8 fqsx, fqsy, fqsz
       real*8 fqsforce
       real*8 fqs_fluct(3)
-      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), T_par(3), alpha_PT(3,3)
+      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), Tsg(3), alpha_PT(3,3)
       real*8 famx, famy, famz 
       real*8 fdpdx, fdpdy, fdpdz
       real*8 fdpvdx, fdpvdy, fdpvdz
@@ -359,7 +359,8 @@
          u2pmean = 0.0; v2pmean = 0.0; w2pmean = 0.0;
          fdpvdx = 0.0d0; fdpvdy = 0.0d0; fdpvdz = 0.0d0;
          !--- Added for PseudoTurbulence
-         Rsg = 0.0d0; T_par = 0.0d0; alpha_PT = 0.0d0
+         Rsg = 0.0d0; Tsg = 0.0d0; alpha_PT = 0.0d0;
+         xi_par = 0.0d0; xi_perp = 0.0d0; xi_T=0.0d0
 
 !
 ! Step 1a: New Added-Mass model of Briney
@@ -477,8 +478,6 @@
             call ppiclf_user_QS_fluct_Lattanzi(i,iStage,fqs_fluct)
          elseif (qs_fluct_flag==2) then
             call ppiclf_user_QS_fluct_Osnes(i,iStage,fqs_fluct)
-         else
-           call ppiclf_exittr('Unknown QS Fluct Flag$', 0.0d0, 0)
          endif
 
          ! Add fluctuation part to quasi-steady force
@@ -665,9 +664,7 @@
            ! All included
            call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
      >                                 xi_par,xi_perp,xi_T,
-     >                                 Rsg, T_par, alpha_PT)
-         else
-           call ppiclf_exittr('Unknown PseudoTurb$', 0.0d0, 0)
+     >                                 Rsg, Tsg, alpha_PT)
          endif
 
          ! Store normally distributed random variables xi for PseudoTurbulence
@@ -750,11 +747,13 @@
      >                  tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
      >           qq )
           ELSEIF(pseudoTurb_flag==1) THEN
-            ! 09/02/2025 -  Addition of PTKE to Rocflu's Energy Equation
             ppiclf_feedbk(PPICLF_P_JE,i) = ppiclf_rprop(PPICLF_R_JSPL,i)
      >       * ( (fqsx+fvux+famx+liftx)*ppiclf_y(PPICLF_JVX,i) + 
      >           (fqsy+fvuy+famy+lifty)*ppiclf_y(PPICLF_JVY,i) + 
      >           (fqsz+fvuz+famz+liftz)*ppiclf_y(PPICLF_JVZ,i) +
+     >           taux_hydro*ppiclf_y(PPICLF_JOX,i) +
+     >           tauy_hydro*ppiclf_y(PPICLF_JOY,i) +
+     >           tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
      >           qq )
           END IF ! pseudoTurb_flag
 
@@ -778,11 +777,11 @@
           ppiclf_feedbk(PPICLF_P_JRSG33,i) = Rsg(3,3)  
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
 
-          ppiclf_feedbk(PPICLF_P_JTSG1,i) = T_par(1) 
+          ppiclf_feedbk(PPICLF_P_JTSG1,i) = Tsg(1) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
-          ppiclf_feedbk(PPICLF_P_JTSG2,i) = T_par(2) 
+          ppiclf_feedbk(PPICLF_P_JTSG2,i) = Tsg(2) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
-          ppiclf_feedbk(PPICLF_P_JTSG3,i) = T_par(3) 
+          ppiclf_feedbk(PPICLF_P_JTSG3,i) = Tsg(3) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
 
           ! 03/17/2026 - Thierry - Pseudo Turbulent Heat Flux Projection

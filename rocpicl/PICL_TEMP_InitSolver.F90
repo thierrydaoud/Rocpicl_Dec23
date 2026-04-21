@@ -801,24 +801,24 @@ DEALLOCATE(volp,STAT=errorFlag)
 IF ( global%myProcid == MASTERPROC) then
    print*, ' '
    print*, '***********************************************'
-   print*, 'TLJ'
    print*, 'Starting PICL_TEMP_InitSolver.F90'
    print*, ' '
-   print*, 'stationary           = ',global%piclStationaryFlag
-   print*, 'qs_flag              = ',global%piclQsFlag
-   print*, 'am_flag              = ',global%piclAmFlag
-   print*, 'pg_flag              = ',global%piclPgFlag
-   print*, 'collisional_flag     = ',global%piclCollisionFlag
-   print*, 'ViscousUnsteady_flag = ',global%piclViscousUnsteady
-   print*, 'heattransfer_flag    = ',global%piclHeatTransferFlag
-   print*, 'HTUnsteady_flag      = ',global%piclHTUnsteadyFlag
-   print*, 'feedback_flag        = ',global%piclFeedbackFlag
-   print*, 'qs_fluct_flag        = ',global%piclQsFluctFlag
-   print*, 'ppiclf_debug         = ',global%piclDebug
-   print*, 'ppiclf_nUnsteadyData = ',ppiclf_nUnsteadyData
-   print*, 'ppiclf_VU            = ',PPICLF_VU
-   print*, 'sbNearest_flag       = ',global%piclSBNearFlag
-   print*, 'burnrate_flag        = ',global%piclBurnRateFlag
+   print*, 'Stationary                  = ',global%piclStationaryFlag
+   print*, 'QS Flag                     = ',global%piclQsFlag
+   print*, 'QS Fluct Flag               = ',global%piclQsFluctFlag
+   print*, 'Pseudo Turbulence Flag      = ',pseudoTurb_flag
+   print*, 'Added Mass Flag             = ',global%piclAmFlag
+   print*, 'Pressure Gradient Flag      = ',global%piclPgFlag
+   print*, 'Collisions Flag             = ',global%piclCollisionFlag
+   print*, 'Viscous-Unsteady Flag       = ',global%piclViscousUnsteady
+   print*, 'Average Heat Transfer Flag  = ',global%piclHeatTransferFlag
+   print*, 'Unsteady Heat Transfer Flag = ',global%piclHTUnsteadyFlag
+   print*, 'Feedback Flag               = ',global%piclFeedbackFlag
+   print*, 'ppiclF DEBUG Flag           = ',global%piclDebug
+   print*, 'ppiclf_nUnsteadyData        = ',ppiclf_nUnsteadyData
+   print*, 'ppiclf_VU                   = ',PPICLF_VU
+   print*, 'SubBin Nearest Flag         = ',global%piclSBNearFlag
+   print*, 'Burn Rate Flag              = ',global%piclBurnRateFlag
 
    IF (global%piclViscousUnsteady >=1) THEN
       print*,'  Using Viscous unsteady history term'

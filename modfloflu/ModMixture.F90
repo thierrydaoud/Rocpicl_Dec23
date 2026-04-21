@@ -183,6 +183,14 @@ MODULE ModMixture
     ! 04/01/2025 - TLJ - ends here
     ! 03/18/2026 - Thierry - adding gradient of T_g
     REAL(RFREAL), DIMENSION(:,:,:), POINTER :: piclgradTg
+    ! 03/19/2026 - Thierry - Added for ParaView plotting - delete later
+    REAL(RFREAL), DIMENSION(:), POINTER :: piclDivPhiQsg
+    REAL(RFREAL), DIMENSION(:,:), POINTER :: piclDivPhiRsg
+    REAL(RFREAL), DIMENSION(:,:), POINTER :: piclRhsMomentum
+    REAL(RFREAL), DIMENSION(:), POINTER :: piclRhsEnergy, Energydotg
+    REAL(RFREAL), DIMENSION(:,:), POINTER :: QsgT1, QsgT2, QsgT3
+    REAL(RFREAL), DIMENSION(:,:), POINTER :: JFCell
+
 
     REAL(RFREAL) :: piclGeom    
 

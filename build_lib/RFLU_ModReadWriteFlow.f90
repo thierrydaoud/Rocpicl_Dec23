@@ -3038,6 +3038,36 @@ MODULE RFLU_ModReadWriteFlow
          varY=pRegion%mixt%piclgradRhog(2,1,1:Ne), &
          varZ=pRegion%mixt%piclgradRhog(3,1,1:Ne))
       ! 03/20/2025 - Thierry - ends here
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'DivPhiQsg', &
+           var=pRegion%mixt%piclDivPhiQsg(1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'DivPhiRsg', &
+           varX=pRegion%mixt%piclDivPhiRsg(XCOORD,1:Ne), &
+           varY=pRegion%mixt%piclDivPhiRsg(YCOORD,1:Ne), &
+           varZ=pRegion%mixt%piclDivPhiRsg(ZCOORD,1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'RhsMomentum', &
+           varX=pRegion%mixt%piclRhsMomentum(XCOORD,1:Ne), &
+           varY=pRegion%mixt%piclRhsMomentum(YCOORD,1:Ne), &
+           varZ=pRegion%mixt%piclRhsMomentum(ZCOORD,1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'RhsEnergy', &
+           var=pRegion%mixt%piclRhsEnergy(1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'Energydotg', &
+           var=pRegion%mixt%Energydotg(1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'QsgT1', &
+           varX=pRegion%mixt%QsgT1(XCOORD,1:Ne), &
+           varY=pRegion%mixt%QsgT1(YCOORD,1:Ne), &
+           varZ=pRegion%mixt%QsgT1(ZCOORD,1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'QsgT2', &
+           varX=pRegion%mixt%QsgT2(XCOORD,1:Ne), &
+           varY=pRegion%mixt%QsgT2(YCOORD,1:Ne), &
+           varZ=pRegion%mixt%QsgT2(ZCOORD,1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'QsgT3', &
+           varX=pRegion%mixt%QsgT3(XCOORD,1:Ne), &
+           varY=pRegion%mixt%QsgT3(YCOORD,1:Ne), &
+           varZ=pRegion%mixt%QsgT3(ZCOORD,1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'JFCell', &
+           varX=pRegion%mixt%JFCell(XCOORD,1:Ne), &
+           varY=pRegion%mixt%JFCell(YCOORD,1:Ne), &
+           varZ=pRegion%mixt%JFCell(ZCOORD,1:Ne))
   END IF
 
 
@@ -3137,8 +3167,16 @@ MODULE RFLU_ModReadWriteFlow
   IF ( global%piclUsed) THEN
       E_IO = PVTK_VAR_XML(varname = 'Particle Volume Fraction', tp='Float64')
       ! 03/20/2025 - Thierry - begins here
-      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'Gradient Gas Density',& 
-                                                               tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'Gradient Gas Density', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'RhsMomentum', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'DivPhiRsg', tp='Float64' )
+      E_IO = PVTK_VAR_XML(varname = 'DivPhiQsg', tp='Float64' )
+      E_IO = PVTK_VAR_XML(varname = 'RhsEnergy', tp='Float64' )
+      E_IO = PVTK_VAR_XML(varname = 'Energydotg', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'QsgT1', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'QsgT2', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'QsgT3', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'JFCell', tp='Float64' )
       ! 03/20/2025 - Thierry - ends here
   END IF
 
@@ -3556,7 +3594,7 @@ END IF
          IOSTAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_FILE_OPEN,3935,iFileName)
+      CALL ErrorStop(global,ERR_FILE_OPEN,3973,iFileName)
     END IF ! global%error
 
     END IF
@@ -3643,7 +3681,7 @@ END IF
       CLOSE(iFile,IOSTAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_FILE_CLOSE,4056,iFileName)
+        CALL ErrorStop(global,ERR_FILE_CLOSE,4094,iFileName)
       END IF ! global%error
     END IF ! masterproc
 
@@ -3745,7 +3783,7 @@ END IF
          CALL RFLU_PICL_WriteFlowBinary(pRegion)
         END IF
       ELSE
-        CALL ErrorStop(global,ERR_REACHED_DEFAULT,4178)
+        CALL ErrorStop(global,ERR_REACHED_DEFAULT,4216)
       END IF ! global%solutFormat
 
 ! ******************************************************************************
@@ -3776,7 +3814,7 @@ END IF
           CALL SPEC_RFLU_WriteEEvBinary(pRegion)
         END IF ! pRegion%specInput%nSpeciesEE
       ELSE
-        CALL ErrorStop(global,ERR_REACHED_DEFAULT,4238)
+        CALL ErrorStop(global,ERR_REACHED_DEFAULT,4276)
       END IF ! global%solutFormat
     END IF ! global%specUsed
 

@@ -55,7 +55,7 @@
       real*8 fqsx, fqsy, fqsz
       real*8 fqsforce
       real*8 fqs_fluct(3)
-      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), T_par(3), alpha_PT(3,3)
+      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), Tsg(3), alpha_PT(3,3)
       real*8 famx, famy, famz 
       real*8 fdpdx, fdpdy, fdpdz
       real*8 fdpvdx, fdpvdy, fdpvdz
@@ -361,7 +361,8 @@
          u2pmean = 0.0; v2pmean = 0.0; w2pmean = 0.0;
          fdpvdx = 0.0d0; fdpvdy = 0.0d0; fdpvdz = 0.0d0;
          !--- Added for PseudoTurbulence
-         Rsg = 0.0d0; T_par = 0.0d0; alpha_PT = 0.0d0
+         Rsg = 0.0d0; Tsg = 0.0d0; alpha_PT = 0.0d0;
+         xi_par = 0.0d0; xi_perp = 0.0d0; xi_T=0.0d0
 
 !
 ! Step 1a: New Added-Mass model of Briney
@@ -479,8 +480,6 @@
             call ppiclf_user_QS_fluct_Lattanzi(i,iStage,fqs_fluct)
          elseif (qs_fluct_flag==2) then
             call ppiclf_user_QS_fluct_Osnes(i,iStage,fqs_fluct)
-         else
-           call ppiclf_exittr('Unknown QS Fluct Flag$', 0.0d0, 0)
          endif
 
          ! Add fluctuation part to quasi-steady force
@@ -667,9 +666,7 @@
            ! All included
            call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
      >                                 xi_par,xi_perp,xi_T,
-     >                                 Rsg, T_par, alpha_PT)
-         else
-           call ppiclf_exittr('Unknown PseudoTurb$', 0.0d0, 0)
+     >                                 Rsg, Tsg, alpha_PT)
          endif
 
          ! Store normally distributed random variables xi for PseudoTurbulence
@@ -752,11 +749,13 @@
      >                  tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
      >           qq )
           ELSEIF(pseudoTurb_flag==1) THEN
-            ! 09/02/2025 -  Addition of PTKE to Rocflu's Energy Equation
             ppiclf_feedbk(PPICLF_P_JE,i) = ppiclf_rprop(PPICLF_R_JSPL,i)
      >       * ( (fqsx+fvux+famx+liftx)*ppiclf_y(PPICLF_JVX,i) + 
      >           (fqsy+fvuy+famy+lifty)*ppiclf_y(PPICLF_JVY,i) + 
      >           (fqsz+fvuz+famz+liftz)*ppiclf_y(PPICLF_JVZ,i) +
+     >           taux_hydro*ppiclf_y(PPICLF_JOX,i) +
+     >           tauy_hydro*ppiclf_y(PPICLF_JOY,i) +
+     >           tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
      >           qq )
           END IF ! pseudoTurb_flag
 
@@ -780,11 +779,11 @@
           ppiclf_feedbk(PPICLF_P_JRSG33,i) = Rsg(3,3)  
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
 
-          ppiclf_feedbk(PPICLF_P_JTSG1,i) = T_par(1) 
+          ppiclf_feedbk(PPICLF_P_JTSG1,i) = Tsg(1) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
-          ppiclf_feedbk(PPICLF_P_JTSG2,i) = T_par(2) 
+          ppiclf_feedbk(PPICLF_P_JTSG2,i) = Tsg(2) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
-          ppiclf_feedbk(PPICLF_P_JTSG3,i) = T_par(3) 
+          ppiclf_feedbk(PPICLF_P_JTSG3,i) = Tsg(3) 
      >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
 
           ! 03/17/2026 - Thierry - Pseudo Turbulent Heat Flux Projection
@@ -2274,7 +2273,7 @@
 
       subroutine ppiclf_user_PseudoTurb(i,iStage,Nu,fqsx,fqsy,fqsz,
      >                         xi_par,xi_perp,xi_T,
-     >                         Rsg, T_par, alpha_PT)
+     >                         Rsg, Tsg, alpha_PT)
 !                                                    
       implicit none
 !
@@ -2285,20 +2284,19 @@
       real*8 Nu, fqsx, fqsy, fqsz
 !
 ! Output:
-      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), T_par(3), alpha_PT(3,3)
+      real*8 xi_par, xi_perp, xi_T, Rsg(3,3), alpha_PT(3,3), Tsg(3) 
 !
 ! Internal:
-      integer*4 m
+      integer*4 m, j
       real*8 aSDE,bq,chi,denum,dW1,dW2,dW3,tF_inv,theta,Z1,Z2,Z3
       real*8 TwoPi
-      real*8 bSDE_CD, bSDE_CL, bSDE_CT, CD_prime
+      real*8 bSDE_CD, bSDE_CL, bSDE_CT, CD_prime, CD_average
       real*8 avec(3), bvec(3), cvec(3)
       real*8 eunit(3)
       real*8 s_par, s_perp, s_T, Rmean_par, Rmean_perp, R_par, R_perp
-      real*8 R(3,3), Q(3,3), Qt(3,3), Tmean_par(3)
-      real*8 CD_average
+      real*8 R(3,3), Q(3,3), Qt(3,3), Tmean_par(3), T_par(3)
       real*8 k_tilde, k_Mach, b_tilde, b_Mach, b_par, b_perp,
-     >       k_Osnes, b_Osnes
+     >       k_Osnes, b_Osnes, KE_mean
       real*8 alpha_fluid, alpha_par, alpha_num, alpha_denum, 
      >       alpha_perp, alpha(3,3)
 
@@ -2345,9 +2343,10 @@
       F11 = -0.0265;
      
       ! zero out variables  at first
-      Rmean_par = 0.0d0 ; Rmean_perp = 0.0d0
+      Rmean_par = 0.0d0; Rmean_perp = 0.0d0
       R = 0.0d0; Rsg = 0.0d0
       Tmean_par = 0.0d0; T_par = 0.0d0
+      alpha = 0.0d0; alpha_PT = 0.0d0; alpha_par = 0.0d0;
 
       !mp = max(0.0d0, min(0.87d0, rmachp))
       !re = max(0.0d0, min(266.0d0, rep))
@@ -2405,7 +2404,15 @@
      >             fqsz*avec(3)
 
       ! avoiding singularity
-      if(CD_average .lt. 1.d-8) return
+      if(CD_average .lt. 1.d-8) then 
+        xi_par  = 0.0d0
+        xi_perp = 0.0d0
+        xi_T    = 0.0d0
+        Rsg     = 0.0d0
+        T_par   = 0.0d0
+        alpha_PT = 0.0d0
+        return
+      endif
 
 ! Calculate the three orthogonal unit vectors
 ! The first vector (avec) is vx/vmag, vy/vmag, and vz/vmag
@@ -2502,6 +2509,10 @@ c---  bvec, cvec: two orthogonal vectors to avec
       k_Osnes =  k_tilde*(1.0d0 + k_Mach)
       b_Osnes =  b_par  *(1.0d0 + b_Mach)
       b_perp  = -b_Osnes/2.0d0
+
+c--  Multiply by the mean relative flow kinetic energy to dimentionalize      
+      KE_mean = 0.5d0 * vmag**2
+      k_Osnes = k_Osnes * KE_mean
                                                                      
       ! Mean Eulerian Reynolds Subgrid Stress - Parallel Component   
       Rmean_par  = 2.0d0*k_Osnes*(b_Osnes  + 1.0d0/3.0d0)
@@ -2512,14 +2523,10 @@ c---  bvec, cvec: two orthogonal vectors to avec
       ! Mean Triple Velocity Correlation
       Tmean_par = E1 + E2*rphip/(E3 + re/300.0) + E4*mp
         
-c--  Multiply by the mean relative flow kinetic energy to dimentionalize      
-      Rmean_par  = Rmean_par  * 0.5d0 * vmag**2
-      Rmean_perp = Rmean_perp * 0.5d0 * vmag**2
-
-c--  Multiply by the mean relative velocity & flow kinetic energy to dimentionalize      
-      Tmean_par(1)  = Tmean_par(1) * vx * k_Osnes * 0.5d0 * vmag**2
-      Tmean_par(2)  = Tmean_par(2) * vy * k_Osnes * 0.5d0 * vmag**2
-      Tmean_par(3)  = Tmean_par(3) * vz * k_Osnes * 0.5d0 * vmag**2
+c--  Multiply by the mean relative velocity & flow kinetic energy to dimentionalize 
+      Tmean_par(1)  = Tmean_par(1) * vx * k_Osnes
+      Tmean_par(2)  = Tmean_par(2) * vy * k_Osnes
+      Tmean_par(3)  = Tmean_par(3) * vz * k_Osnes
 
 c------ Lagrangian Model
   
@@ -2549,7 +2556,7 @@ c---   We ditch Osnes expression for s_perp and assume it as big as s_par
       bSDE_CD = s_par *sqrt(2.0*tF_inv)
       bSDE_CL = s_perp*sqrt(2.0*tF_inv)
       bSDE_CT = s_T *sqrt(2.0*tF_inv)
-  
+
       ! Langevin Model implemented for xi_par, xi_perp, xi_T
       xi_par = (1.0-aSDE*fac)*ppiclf_rprop(PPICLF_R_XIPAR,i)
      >          + bSDE_CD*dW1
@@ -2560,15 +2567,14 @@ c---   We ditch Osnes expression for s_perp and assume it as big as s_par
 
 
       ! Lagrangian Reynolds Subgrid Stress - Parallel Component
-      R_par = 1.0 + A1 + A2 * CD_prime / CD_average + xi_par
+      R_par = 1.0 + A1 + A2*CD_prime/max(CD_average, 1.0d-8) + xi_par
   
       ! Lagrangian Reynolds Subgrid Stress - Perpendicular Component
-      R_perp = 1.0 + A3 * CD_prime / CD_average + xi_perp
+      R_perp = 1.0 + A3*CD_prime/max(CD_average, 1.0d-8) + xi_perp
 
-c--  Multiply Lagrangian Model by the Eulerian Mean Model
-      R_par  = R_par  * Rmean_par 
-      R_perp = R_perp * Rmean_perp
-
+c--  Multiply Lagrangian Model by Eulerian Model and gas density
+      R_par  = R_par  * Rmean_par * rhof
+      R_perp = R_perp * Rmean_perp * rhof
   
 c--- R = |R_par,   0   ,   0   |
 c---     | 0   , R_perp,   0   |
@@ -2583,49 +2589,42 @@ c--- Now Rotate the matrix, Rsg = Q . R . Q^T
   
       Rsg = matmul(Q, matmul(R,Qt))
 
+c--- All the PT models are per cell volume, we transform them per
+c--- particle
+      Rsg = Rsg*ppiclf_rprop(PPICLF_R_JVOLP,i)/rphip
+
 c--- Osnes Formulation for Triple Velocity Correlation
 
-      T_par = A4 * CD_prime/CD_average + xi_T
+      T_par = A4 * CD_prime/max(CD_average, 1.0d-8) + xi_T
 
 c--  Multiply by the mean relative velocity & flow kinetic energy to dimentionalize      
 c--  then add mean
-      T_par(1) = T_par(1) * vx * k_Osnes * 0.5d0 * vmag**2 
+      ! check if I mu;itply by avec(1)*vmag instead of vx
+      T_par(1) = T_par(1) * vx * k_Osnes
      >           + Tmean_par(1)
 
-      T_par(2) = T_par(2) * vy * k_Osnes * 0.5d0 * vmag**2 
+      T_par(2) = T_par(2) * vy * k_Osnes
      >           + Tmean_par(2)
 
-      T_par(3) = T_par(3) * vz * k_Osnes * 0.5d0 * vmag**2 
+      T_par(3) = T_par(3) * vz * k_Osnes
      >           + Tmean_par(3)
 
+      Tsg = matmul(Q, T_par)
 
-      ! The Model was developed for Euler-Euler codes
-      ! We use it for point-particles by using the ratio below
-      ! instead of projecting back on the fluid and using that Re
-      re = rep * ppiclf_rprop(PPICLF_R_JVOLP,i)/ rphip
+      Tsg = Tsg*ppiclf_rprop(PPICLF_R_JVOLP,i)/rphip 
 
       ! Zhou et al.,  Eq. (31)
       ! Parallel component of Pseudo-Turbulent Diffusivity Tensor
-!      alpha_par = 
-!     >(2.0d0*re*(re+1.4d0)*(rpr**2)*exp(-0.002089d0*re)/(3.0d0*rpi*Nu))
-!     >*(rphif*(-5.11d0*rphip+10.1d0*rphip**2-10.85d0*rphip**3)
-!     > +1.0d0-exp(-10.96d0*rphip))/
-!     >((1.17d0*rphip-0.2021d0*rphip**(1.0d0/2.0d0)
-!     > +0.08568*rphip**(1.0d0/4.0d0))
-!     >*rphif**2*(1.0d0-1.6d0*rphip*rphif-3.0d0*rphip*rphif**4
-!     >*exp(-re**(0.4)*rphip)))
-
-!--------- Zhou's Formulation
-      alpha_num = 2.0d0*re*(re+1.4d0)*(rpr**2)*exp(-0.002089d0*re)*
+      alpha_num = 2.0d0*rem*(rem+1.4d0)*(rpr**2)*exp(-0.002089d0*rem)*
      > (rphif*(-5.11d0*rphip+10.1d0*rphip**2-10.85d0*rphip**3)
      > +1.0d0-exp(-10.96d0*rphip))
 
       alpha_denum =  3.0d0*rpi*Nu*(1.17d0*rphip-0.2021d0
      > *rphip**(1.0/2.0) +0.08568*rphip**(1.0/4.0))
      > *(rphif**2)*(1.0d0-1.6d0*rphip*rphif-3.0d0*rphip*(rphif**4)
-     > *exp((-re**0.4)*rphip))
+     > *exp((-rem**0.4)*rphip))
 
-      alpha_par = alpha_num/alpha_denum
+      alpha_par = alpha_num/max(alpha_denum, 1.0d-12)
 
       ! Thermal Diffusivity
       alpha_fluid = rkappa/(rhof * rcp_fluid) 
@@ -2633,11 +2632,8 @@ c--  then add mean
       ! Multiply by thermal diffusivity
       alpha_par = alpha_par * alpha_fluid
       
-      ! b_par is from Mehrabadi et al
-      b_perp = -b_par/2.0d0
-
       ! Perpendicular Component of Pseudo-Turbulent Diffusivity Tensor
-      alpha_perp = (3.0d0*b_perp + 1.0d0)/(3.0d0*b_par + 1.0d0)
+      alpha_perp = (3.0d0*b_perp + 1.0d0)/(3.0d0*b_Osnes + 1.0d0)
      >             * alpha_par
 
       alpha(1,1) = alpha_par
@@ -2645,6 +2641,18 @@ c--  then add mean
       alpha(3,3) = alpha_perp
 
       alpha_PT = matmul(Q, matmul(alpha,Qt))
+
+      alpha_PT = alpha_PT*ppiclf_rprop(PPICLF_R_JVOLP,i)/rphip 
+
+!      if((ppiclf_nid.eq.0) .and. (i<=10) .and. iStage==3) then
+!        write(56,*) ppiclf_time, i,
+!     >   k_tilde, k_Mach, k_Osnes,
+!     >   KE_mean, Rmean_par,
+!     >   A2 * CD_prime / CD_average, xi_par,
+!     >   R_par/Rmean_par,
+!     >   R_par,
+!     >   R(1,1), Rsg(1,1)
+!      endif
 
       return
       end
