@@ -1,6 +1,6 @@
 #define PPICLF_LPART 80000
 #define PPICLF_LRS 12
-#define PPICLF_LRP 48
+#define PPICLF_LRP 59
 #define PPICLF_LRP2 0
 #define PPICLF_LRP4 0
 #define PPICLF_LRP5 0
@@ -11,9 +11,9 @@
 ! number of timesteps kept in history kernels
 
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
-#define PPICLF_LRP3 0
+#define PPICLF_VU 50
+#define PPICLF_LRP3 10*PPICLF_VU
+!#define PPICLF_LRP3 0
 
 ! maximum number of triangular patch boundaries
 #define PPICLF_LWALL 2000
@@ -81,6 +81,17 @@
 #define PPICLF_R_XIPAR 46
 #define PPICLF_R_XIPERP 47
 #define PPICLF_R_XIT 48
+#define PPICLF_R_RTildePar 49
+#define PPICLF_R_RTildePerp 50
+#define PPICLF_R_R11 51
+#define PPICLF_R_R22 52
+#define PPICLF_R_R33 53
+#define PPICLF_R_KMehra 54
+#define PPICLF_R_KOsnes 55
+#define PPICLF_R_RparMehra 56
+#define PPICLF_R_RperpMehra 57
+#define PPICLF_R_RTerm2Par 58
+#define PPICLF_R_RTerm2Perp 59
 
 ! rprop5: PPICLF_LRP5 - Storing Force Models
 #define PPICLF_R_FQSX 1

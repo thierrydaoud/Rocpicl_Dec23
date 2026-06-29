@@ -229,7 +229,7 @@
 !
       if((am_flag==2).or.(collisional_flag>=1)
      >                  .or.(qs_fluct_flag>=1)
-     >                .or.(pseudoTurb_flag==1)) then
+     >                .or.(pseudoTurb_flag .gt. 0)) then
         call ppiclf_user_subbinMap(i_Bin, n_SBin, tot_SBin 
      >                               ,SBin_counter ,SBin_map)
       endif ! Collisions, QS Fluct, Briney AM, or pseudoTurb flags on
@@ -660,6 +660,7 @@
 !           call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
 !     >                                 xi_par,xi_perp,xi_T,
 !     >                                 Rsg, T_par, alpha_PT)
+
 !         elseif(pseudoTurb_flag==2) then
            ! All included
            call ppiclf_user_PseudoTurb(i,iStage,Nuss,fqsx,fqsy,fqsz,
@@ -746,7 +747,7 @@
      >                  tauy_hydro*ppiclf_y(PPICLF_JOY,i) +
      >                  tauz_hydro*ppiclf_y(PPICLF_JOZ,i) +
      >           qq )
-          ELSEIF(pseudoTurb_flag==1) THEN
+          ELSEIF(pseudoTurb_flag .gt. 0) THEN
             ppiclf_feedbk(PPICLF_P_JE,i) = ppiclf_rprop(PPICLF_R_JSPL,i)
      >       * ( (fqsx+fvux+famx+liftx)*ppiclf_y(PPICLF_JVX,i) + 
      >           (fqsy+fvuy+famy+lifty)*ppiclf_y(PPICLF_JVY,i) + 
@@ -759,50 +760,50 @@
 
           ! 07/21/2025 - Thierry - Added Reynolds Subgrid Stress Feedback
           ppiclf_feedbk(PPICLF_P_JRSG11,i) = Rsg(1,1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG12,i) = Rsg(1,2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG13,i) = Rsg(1,3) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG21,i) = Rsg(2,1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG22,i) = Rsg(2,2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG23,i) = Rsg(2,3) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG31,i) = Rsg(3,1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG32,i) = Rsg(3,2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JRSG33,i) = Rsg(3,3)  
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
 
           ppiclf_feedbk(PPICLF_P_JTSG1,i) = Tsg(1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JTSG2,i) = Tsg(2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JTSG3,i) = Tsg(3) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
 
           ! 03/17/2026 - Thierry - Pseudo Turbulent Heat Flux Projection
           ppiclf_feedbk(PPICLF_P_JAlphaPT11,i) = alpha_PT(1,1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT12,i) = alpha_PT(1,2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT13,i) = alpha_PT(1,3) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT21,i) = alpha_PT(2,1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT22,i) = alpha_PT(2,2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT23,i) = alpha_PT(2,3) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT31,i) = alpha_PT(3,1) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT32,i) = alpha_PT(3,2) 
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
           ppiclf_feedbk(PPICLF_P_JAlphaPT33,i) = alpha_PT(3,3)  
-     >                                   * ppiclf_rprop(PPICLF_R_JSPL,i)
+     >      *ppiclf_rprop(PPICLF_R_JVOLP,i)*ppiclf_rprop(PPICLF_R_JSPL,i)
 
         END IF ! Feedback flag
 

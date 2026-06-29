@@ -143,6 +143,7 @@ TYPE(t_grid), POINTER :: pGrid
 ! Below added for pseudo turbulence
   INTEGER(KIND=4) :: j
   REAL(KIND=8), DIMENSION(:), ALLOCATABLE :: rhog, DivPhiQsg
+
   REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE :: JRSGCell, JTSGCell, JAlphaPTCell, JPTHFCell, &
                                                DivPhiRSG, ugas, Qsg
   !---------------------------------------------------------------  
@@ -219,8 +220,8 @@ TYPE(t_grid), POINTER :: pGrid
 ! Maybe add if statement to only allocate if PseudoTurbulence is used
     ALLOCATE(JRSGCell(9,nCells), JTSGCell(3,nCells), JAlphaPTCell(9,nCells), &
              JPTHFCell(3,nCells), DivPhiRsg(3,nCells), rhog(nCells), ugas(3,nCells), &
-             Qsg(3,nCells), DivPhiQsg(nCells), &
-            STAT=errorFlag)
+             Qsg(3,nCells), DivPhiQsg(nCells) &
+            ,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
       CALL ErrorStop(global,ERR_ALLOCATE,__LINE__,'PPICLF:xGrid')
@@ -522,6 +523,7 @@ IF(global%piclFeedbackFlag == 1) THEN
        !VOL Frac cap
        IF(PhiP(i) .GT. 0.62) PhiP(i) = 0.62
        vfp(i) = PhiP(i)      
+
    !---------------------------------------------------------------------------------------
        ! 07/21/2025 - Thierry - begins here - added for PseudoTurbulence
        if(global%piclPseudoTurbFlag .gt. 0) then
@@ -548,6 +550,18 @@ IF(global%piclFeedbackFlag == 1) THEN
          call ppiclf_solve_GetProFld(i,PPICLF_P_JAlphaPT31,JAlphaPTCell(7,i))
          call ppiclf_solve_GetProFld(i,PPICLF_P_JAlphaPT32,JAlphaPTCell(8,i))
          call ppiclf_solve_GetProFld(i,PPICLF_P_JAlphaPT33,JAlphaPTCell(9,i))
+
+         ! divide by total particle volume in cell
+         do j=1,9
+           JRSGCell(j,i) = JRSGCell(j,i)/(vfP(i)*pRegion%grid%vol(i) + epsilon(1.0_RFREAL))
+           JAlphaPTCell(j,i) = JAlphaPTCell(j,i)/(vfP(i)*pRegion%grid%vol(i) + epsilon(1.0_RFREAL))
+         enddo
+
+         ! divide by total particle volume in cell
+         do j=1,3
+          JTSGCell(j,i) = JTSGCell(j,i)/(vfP(i)*pRegion%grid%vol(i) + epsilon(1.0_RFREAL))
+         enddo
+
 
        endif ! piclPseudoTurbFlag
 !---------------------------------------------------------------------------------------
@@ -625,29 +639,31 @@ IF(global%piclFeedbackFlag == 1) THEN
 
            ugas(ZCOORD,i) = pRegion%mixt%cv(CV_MIXT_ZMOM,i)&
                           /pRegion%mixt%cv(CV_MIXT_DENS,i)
-
+ 
            ! Subgrid Kinetic Energy
            ! K_sg = 1/(2*rhof) * tr(Rsg), dimension of (nCellsTot)
            ! K_sg is added to the Total Gas Energy term
            pRegion%mixt%piclKsg(i) = 1.0_RFREAL/(2.0_RFREAL*rhog(i)) &
                                   * (JRSGCell(1,i) + JRSGCell(5,i) + JRSGCell(9,i))
 
-           ! Storing for ParaView plotting
+           if(pRegion%mixt%piclKsg(i) .lt. 0.0_RFREAL) then
+             print*, "NEGATIVE Ksg (i) = ", pRegion%mixt%piclKsg(i), &
+                     "Rsg(1,1) =", JRSGCell(1,i), &
+                     "Rsg(2,2) =", JRSGCell(5,i), &
+                     "Rsg(3,3) =", JRSGCell(9,i)
+             !STOP
+           endif
+
            do j=1,9
              ! \phi_g \rho_g R_sg
              pRegion%mixt%piclPhiRSG(j,i) = JRSGCell(j,i) * (1.0_RFREAL - PhiP(i))
            end do
-
-           ! ParaView plotting, delete later
-           pRegion%mixt%Energydotg(i) = JFECell(i)
-           pRegion%mixt%JFCell(XCOORD,i) = JFXCell(i)
-           pRegion%mixt%JFCell(YCOORD,i) = JFYCell(i)
-           pRegion%mixt%JFCell(ZCOORD,i) = JFZCell(i)
          
          endif ! piclPseudoTurbFlag
 
     END DO !nCells
-       
+ 
+
        if(global%piclPseudoTurbFlag .gt. 0) then
 
          ALLOCATE(varInfoPicl(9), piclcvInfo(9), STAT=errorFlag)
@@ -688,7 +704,7 @@ IF(global%piclFeedbackFlag == 1) THEN
          DEALLOCATE(varInfoPicl, piclcvInfo, STAT=errorFlag)
 
 
-         ! PTHF = alpha_PT \cdot grad(T_g)
+!         ! PTHF = alpha_PT \cdot grad(T_g)
           JPTHFCell(XCOORD,:) =  JAlphaPTCell(1,:)*pRegion%mixt%piclgradTg(XCOORD,1,:nCells) & 
                                 +JAlphaPTCell(2,:)*pRegion%mixt%piclgradTg(YCOORD,1,:nCells) &
                                 +JAlphaPTCell(3,:)*pRegion%mixt%piclgradTg(ZCOORD,1,:nCells)
@@ -725,21 +741,6 @@ IF(global%piclFeedbackFlag == 1) THEN
             + (JRSGCell(7,:)*ugas(XCOORD,:) + JRSGCell(8,:)*ugas(YCOORD,:) + JRSGCell(9,:)*ugas(ZCOORD,:))
 
 
-         ! Using for ParaView plotting - delete later
-         pRegion%mixt%QsgT1(XCOORD,:nCells) = rhog(:)*Cp*JPTHFCell(XCOORD,:)
-         pRegion%mixt%QsgT1(YCOORD,:nCells) = rhog(:)*Cp*JPTHFCell(YCOORD,:)
-         pRegion%mixt%QsgT1(ZCOORD,:nCells) = rhog(:)*Cp*JPTHFCell(ZCOORD,:)
-
-         pRegion%mixt%QsgT2(XCOORD,:nCells) = rhog(:)/2.0_RFREAL * JTSGCell(XCOORD,:)
-         pRegion%mixt%QsgT2(YCOORD,:nCells) = rhog(:)/2.0_RFREAL * JTSGCell(YCOORD,:)
-         pRegion%mixt%QsgT2(ZCOORD,:nCells) = rhog(:)/2.0_RFREAL * JTSGCell(ZCOORD,:) 
-
-         pRegion%mixt%QsgT3(XCOORD,:nCells) = JRSGCell(1,:)*ugas(XCOORD,:) + JRSGCell(2,:)*ugas(YCOORD,:) + JRSGCell(3,:)*ugas(ZCOORD,:)
-         pRegion%mixt%QsgT3(YCOORD,:nCells) = JRSGCell(4,:)*ugas(XCOORD,:) + JRSGCell(5,:)*ugas(YCOORD,:) + JRSGCell(6,:)*ugas(ZCOORD,:)
-         pRegion%mixt%QsgT3(ZCOORD,:nCells) = JRSGCell(7,:)*ugas(XCOORD,:) + JRSGCell(8,:)*ugas(YCOORD,:) + JRSGCell(9,:)*ugas(ZCOORD,:)
-
-                                          
-
          do j=1,3
            ! Q_sg -> \phi_g Q_sg
            pRegion%mixt%piclPhiQsg(j,1:nCells) = Qsg(j,:) * (1.0_RFREAL - PhiP(:))
@@ -768,38 +769,51 @@ IF(global%piclFeedbackFlag == 1) THEN
                                         pRegion%mixt%piclGradPhiQsg)          
 
          DEALLOCATE(varInfoPicl, piclcvInfo, STAT=errorFlag)
-
-
-!       ! Now compute Div(\phi_g R_sg)
-        ! 07/23/2025 - Thierry Daoud 
-        ! pRegion%mixt%piclgradPhiRSG dimension is (3,9,nCellsTot)
-        ! nCellsTot = no. actual cells (nCells) + no. dummy (ghost?) cells
-        ! When calculating the gradient, you need to use nCellsTot
-        
-! Div (\phi_g R_sg) - comma denotes partial derivative (,3 -> partial / partial x_3)
-! x-direction: Div(\phi_g R_sg),x = (\phi R_11),1 + (\phi R_12),2 + (\phi R_13),3
-! y-direction: Div(\phi_g R_sg),y = (\phi R_21),1 + (\phi R_22),2 + (\phi R_23),3
-! z-direction: Div(\phi_g R_sg),z = (\phi R_31),1 + (\phi R_32),2 + (\phi R_33),3
-
+!
+!
+!!       ! Now compute Div(\phi_g R_sg)
+!        ! 07/23/2025 - Thierry Daoud 
+!        ! pRegion%mixt%piclgradPhiRSG dimension is (3,9,nCellsTot)
+!        ! nCellsTot = no. actual cells (nCells) + no. dummy (ghost?) cells
+!        ! When calculating the gradient, you need to use nCellsTot
+!        
+!! Div (\phi_g R_sg) - comma denotes partial derivative (,3 -> partial / partial x_3)
+!! x-direction: Div(\phi_g R_sg),x = (\phi R_11),1 + (\phi R_12),2 + (\phi R_13),3
+!! y-direction: Div(\phi_g R_sg),y = (\phi R_21),1 + (\phi R_22),2 + (\phi R_23),3
+!! z-direction: Div(\phi_g R_sg),z = (\phi R_31),1 + (\phi R_32),2 + (\phi R_33),3
+!
     DO i = 1,pRegion%grid%nCells
-         DivPhiRSG(XCOORD,i) = pRegion%mixt%piclGradPhiRsg(XCOORD,1,i) &
+         DivPhiRSG(XCOORD,i) = pregion%grid%vol(i) * &
+                              (pRegion%mixt%piclGradPhiRsg(XCOORD,1,i) &
                              + pRegion%mixt%piclGradPhiRsg(YCOORD,2,i) &
-                             + pRegion%mixt%piclGradPhiRsg(ZCOORD,3,i)
+                             + pRegion%mixt%piclGradPhiRsg(ZCOORD,3,i))
 
-         DivPhiRSG(YCOORD,i) = pRegion%mixt%piclGradPhiRsg(XCOORD,4,i) &
+         DivPhiRSG(YCOORD,i) = pregion%grid%vol(i)* &
+                              (pRegion%mixt%piclGradPhiRsg(XCOORD,4,i) &
                              + pRegion%mixt%piclGradPhiRsg(YCOORD,5,i) &
-                             + pRegion%mixt%piclGradPhiRsg(ZCOORD,6,i)
+                             + pRegion%mixt%piclGradPhiRsg(ZCOORD,6,i))
 
-         DivPhiRSG(ZCOORD,i) = pRegion%mixt%piclGradPhiRsg(XCOORD,7,i) &
+         DivPhiRSG(ZCOORD,i) = pregion%grid%vol(i) * &
+                              (pRegion%mixt%piclGradPhiRsg(XCOORD,7,i) &
                              + pRegion%mixt%piclGradPhiRsg(YCOORD,8,i) &
-                             + pRegion%mixt%piclGradPhiRsg(ZCOORD,9,i)
+                             + pRegion%mixt%piclGradPhiRsg(ZCOORD,9,i))
+                           
+         ! storing for paraview plotting - delete later
+         pRegion%mixt%FCell(XCOORD,i) = JFXCell(i)
+         pRegion%mixt%FCell(YCOORD,i) = JFYCell(i)
+         pRegion%mixt%FCell(ZCOORD,i) = JFZCell(i)
 
+         pRegion%mixt%DivPhiRsg(XCOORD,i) = DivPhiRSG(XCOORD,i)
+         pRegion%mixt%DivPhiRsg(YCOORD,i) = DivPhiRSG(YCOORD,i)
+         pRegion%mixt%DivPhiRsg(ZCOORD,i) = DivPhiRSG(ZCOORD,i)
 
-! Div (\phi_g Q_sg) - comma denotes partial derivative (,3 -> partial / partial x_3)
-! Scalar: Div(\phi_g Q_sg) = (\phi Q_1),1 + (\phi Q_2),2 + (\phi Q_3),3
-         DivPhiQsg(i) =  pRegion%mixt%piclGradPhiQsg(XCOORD,1,i) &
+!
+!! Div (\phi_g Q_sg) - comma denotes partial derivative (,3 -> partial / partial x_3)
+!! Scalar: Div(\phi_g Q_sg) = (\phi Q_1),1 + (\phi Q_2),2 + (\phi Q_3),3
+         DivPhiQsg(i) =  pregion%grid%vol(i) * & 
+                        (pRegion%mixt%piclGradPhiQsg(XCOORD,1,i) &
                        + pRegion%mixt%piclGradPhiQsg(YCOORD,2,i) &
-                       + pRegion%mixt%piclGradPhiQsg(ZCOORD,3,i)
+                       + pRegion%mixt%piclGradPhiQsg(ZCOORD,3,i))
 
  IF (IsNan(DivPhiQsg(i)) .EQV. .TRUE.) THEN
         write(*,*) "BROKEN- DivPhiQSG, i ", DivPhiQsg(i), i
@@ -813,20 +827,19 @@ IF(global%piclFeedbackFlag == 1) THEN
         CALL ErrorStop(global,ERR_INVALID_VALUE ,__LINE__,'PPICLF:Broken QSG')
 endif
 
+!         SELECT CASE(global%piclPseudoTurbFlag)
+!         CASE(1)
+!            DivPhiQsg(i) = 0.0d0
+!         CASE(2)
+!
+!         CASE DEFAULT
+!           CALL ErrorStop(global,ERR_REACHED_DEFAULT,__LINE__)
+!          END SELECT ! piclPseudoTurbFlag
+                      
 
-         ! Using for ParaView plotting - delete later
-         pRegion%mixt%piclDivPhiQsg(i)        =  DivPhiQsg(i)!/pregion%grid%vol(i)
-
-         pRegion%mixt%piclDivPhiRsg(XCOORD,i) = DivPhiRSG(XCOORD,i)!/pregion%grid%vol(i)
-         pRegion%mixt%piclDivPhiRsg(YCOORD,i) = DivPhiRSG(YCOORD,i)!/pregion%grid%vol(i)
-         pRegion%mixt%piclDivPhiRsg(ZCOORD,i) = DivPhiRSG(ZCOORD,i)!/pregion%grid%vol(i)
-
-         pRegion%mixt%piclRhsMomentum(XCOORD,i) = pRegion%mixt%rhs(CV_MIXT_XMOM,i)!/pregion%grid%vol(i)
-         pRegion%mixt%piclRhsMomentum(YCOORD,i) = pRegion%mixt%rhs(CV_MIXT_YMOM,i)!/pregion%grid%vol(i)
-         pRegion%mixt%piclRhsMomentum(ZCOORD,i) = pRegion%mixt%rhs(CV_MIXT_ZMOM,i)!/pregion%grid%vol(i)
-         pRegion%mixt%piclRhsEnergy(i)          = pRegion%mixt%rhs(CV_MIXT_ENER,i)!/pregion%grid%vol(i)
-
-
+         if(global%piclPseudoTurbFlag .eq. 1) then
+           DivPhiQsg(i) = 0.0d0
+         endif
 
          ! Feedback Div(phi Rsg) to the Fluid Momentum Equations
          pRegion%mixt%rhs(CV_MIXT_XMOM,i) &
@@ -887,7 +900,9 @@ END DO
     END IF ! global%error
 !---------------------------------------------------------------  
     DEALLOCATE(JRSGCell, JTSGCell, JAlphaPTCell, JPTHFCell, &
-               DivPhiRSG, rhog, ugas, Qsg, DivPhiQsg, STAT=errorFlag)
+               DivPhiRSG, rhog, ugas, Qsg, DivPhiQsg &
+               ,STAT=errorFlag)
+
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
       CALL ErrorStop(global,ERR_DEALLOCATE,__LINE__,'PPICLF:xGrid')

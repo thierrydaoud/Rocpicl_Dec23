@@ -159,14 +159,13 @@ SUBROUTINE RFLU_TimeStepping(dTimeSystem,dIterSystem,regions)
 ! number of timesteps kept in history kernels
 
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 
 ! maximum number of triangular patch boundaries
 
 ! y, y1, ydot, ydotc: 12
 
-! rprop: 48
+! rprop: 59
 
 ! rprop5: 0 - Storing Force Models
 

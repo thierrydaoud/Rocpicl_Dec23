@@ -68,7 +68,7 @@
 !
 !!  Current cases:
 !     barrelExp
-!     cylds, rectshktb
+!     cylds, rectshktb, cone
 !     wedge
 !!  Legacy  cases:
 !     acoustic
@@ -309,45 +309,77 @@ SUBROUTINE RFLU_InitFlowHardCode(pRegion)
 
            !***************
            IF ( pRegion%mixtInput%gasModel /= GAS_MODEL_MIXT_JWL ) THEN ! Normal Case
-
               DO icg = 1,pGrid%nCellsTot
                  x = pGrid%cofg(XCOORD,icg)
                  y = pGrid%cofg(YCOORD,icg)
                  z = pGrid%cofg(ZCOORD,icg)
-
                  radius = SQRT(x**2 + y**2)
                  IF ( radius < pMixtInput%prepRealVal1 .AND. &
                        (z < pMixtInput%prepRealVal2) ) THEN
                     ! High Pressure Region
-                    d = pMixtInput%prepRealVal5
+                    d = pMixtInput%prepRealVal6
                     u = 0.0_RFREAL
                     v = 0.0_RFREAL
-                    !w = 0.0_RFREAL
-                    w = pMixtInput%prepRealVal7
-                    p = pMixtInput%prepRealVal6
+                    w = 0.0_RFREAL
+                    p = pMixtInput%prepRealVal7
                  ELSE
                     ! Ambient Region
                     d = pMixtInput%prepRealVal3
                     u = 0.0_RFREAL
                     v = 0.0_RFREAL
-                    w = 0.0_RFREAL
+                    w = pMixtInput%prepRealVal5
                     p = pMixtInput%prepRealVal4
-                    global%ppiclf_p0 = pMixtInput%prepRealVal4
                  END IF
                  mw = pGv(GV_MIXT_MOL,indMol*icg)
                  cp = pGv(GV_MIXT_CP ,indCp *icg)
                  gc = MixtPerf_R_M(mw)
                  g  = MixtPerf_G_CpR(cp,gc)
-                 
                  ksg = 0.0_RFREAL
-   
                  pCv(CV_MIXT_DENS,icg) = d
                  pCv(CV_MIXT_XMOM,icg) = d*u
                  pCv(CV_MIXT_YMOM,icg) = d*v
                  pCv(CV_MIXT_ZMOM,icg) = d*w
                  pCv(CV_MIXT_ENER,icg) = d*MixtPerf_Eo_DGPUVW(d,g,p,u,v,w,ksg)
-    
               END DO ! icg
+
+              !DO icg = 1,pGrid%nCellsTot
+              !   x = pGrid%cofg(XCOORD,icg)
+              !   y = pGrid%cofg(YCOORD,icg)
+              !   z = pGrid%cofg(ZCOORD,icg)
+
+              !   radius = SQRT(x**2 + y**2)
+              !   IF ( radius < pMixtInput%prepRealVal1 .AND. &
+              !         (z < pMixtInput%prepRealVal2) ) THEN
+              !      ! High Pressure Region
+              !      d = pMixtInput%prepRealVal5
+              !      u = 0.0_RFREAL
+              !      v = 0.0_RFREAL
+              !      !w = 0.0_RFREAL
+              !      w = pMixtInput%prepRealVal7
+              !      p = pMixtInput%prepRealVal6
+              !   ELSE
+              !      ! Ambient Region
+              !      d = pMixtInput%prepRealVal3
+              !      u = 0.0_RFREAL
+              !      v = 0.0_RFREAL
+              !      w = 0.0_RFREAL
+              !      p = pMixtInput%prepRealVal4
+              !      global%ppiclf_p0 = pMixtInput%prepRealVal4
+              !   END IF
+              !   mw = pGv(GV_MIXT_MOL,indMol*icg)
+              !   cp = pGv(GV_MIXT_CP ,indCp *icg)
+              !   gc = MixtPerf_R_M(mw)
+              !   g  = MixtPerf_G_CpR(cp,gc)
+              !   
+              !   ksg = 0.0_RFREAL
+   
+              !   pCv(CV_MIXT_DENS,icg) = d
+              !   pCv(CV_MIXT_XMOM,icg) = d*u
+              !   pCv(CV_MIXT_YMOM,icg) = d*v
+              !   pCv(CV_MIXT_ZMOM,icg) = d*w
+              !   pCv(CV_MIXT_ENER,icg) = d*MixtPerf_Eo_DGPUVW(d,g,p,u,v,w,ksg)
+    
+              !END DO ! icg
            ENDIF ! non-JWL case
            !***************
 
@@ -749,6 +781,63 @@ SUBROUTINE RFLU_InitFlowHardCode(pRegion)
            ENDIF ! RB case
            ENDIF ! JWL case
            !+++++++++++++++
+! ------------------------------------------------------------------------------
+!       Three Shocks Tube
+! ------------------------------------------------------------------------------
+
+        CASE ( "threeshock" ) 
+          DO icg = 1,pGrid%nCellsTot
+            x = pGrid%cofg(XCOORD,icg)
+            y = pGrid%cofg(YCOORD,icg)
+
+            ! first shock
+            IF ( x < pMixtInput%prepRealVal1 .and. &
+                 x >  pMixtInput%prepRealVal7) THEN
+              d = pMixtInput%prepRealVal2
+              u = pMixtInput%prepRealVal3
+              v = 0.0_RFREAL
+              w = 0.0_RFREAL
+              p = pMixtInput%prepRealVal4
+            ! second shock
+            ELSE IF( x < pMixtInput%prepRealVal7 .and. &
+                     x > pMixtInput%prepRealVal11  ) THEN
+              d = pMixtInput%prepRealVal8
+              u = pMixtInput%prepRealVal9
+              v = 0.0_RFREAL
+              w = 0.0_RFREAL
+              p = pMixtInput%prepRealVal10
+            ! third shock
+            ELSE IF( x < pMixtInput%prepRealVal11 ) THEN
+              d = pMixtInput%prepRealVal12
+              u = pMixtInput%prepRealVal13
+              v = 0.0_RFREAL
+              w = 0.0_RFREAL
+              p = pMixtInput%prepRealVal14
+            ! driven section atm condition
+            ELSE 
+              d = pMixtInput%prepRealVal5
+              u = 0.0_RFREAL
+              v = 0.0_RFREAL
+              w = 0.0_RFREAL
+              p = pMixtInput%prepRealVal6
+            END IF ! x         
+
+            mw = pGv(GV_MIXT_MOL,indMol*icg)
+            cp = pGv(GV_MIXT_CP ,indCp *icg)
+        
+            gc = MixtPerf_R_M(mw)
+            g  = MixtPerf_G_CpR(cp,gc)
+
+            ksg = 0.0_RFREAL
+                               
+            pCv(CV_MIXT_DENS,icg) = d
+            pCv(CV_MIXT_XMOM,icg) = d*u
+            pCv(CV_MIXT_YMOM,icg) = d*v
+            pCv(CV_MIXT_ZMOM,icg) = d*w
+            pCv(CV_MIXT_ENER,icg) = d*MixtPerf_Eo_DGPUVW(d,g,p,u,v,w,ksg)
+          END DO ! icg
+
+
 
 
 ! ------------------------------------------------------------------------------
@@ -757,7 +846,7 @@ SUBROUTINE RFLU_InitFlowHardCode(pRegion)
 !       Modified for quarterplane with JWL EOS 1-equation model
 ! ------------------------------------------------------------------------------
 
-        CASE ( "cylds", "rectshktb" )
+        CASE ( "cylds", "rectshktb", "cone" )
 
            ! Store ambient background pressure p0
            ! This value is assumed to be the pressure of the initial
@@ -787,6 +876,11 @@ SUBROUTINE RFLU_InitFlowHardCode(pRegion)
                     radius = x
                     ur = pMixtInput%prepRealVal3
                     ut = 0.0_RFREAL
+                 ELSEIF (TRIM(global%casename)=="cone") THEN
+                    radius = SQRT(x**2 + y**2)
+                    theta = ATAN2(y,x)
+                    ur = pMixtInput%prepRealVal3 * cos(theta)
+                    ut = pMixtInput%prepRealVal3 * sin(theta)
                  ENDIF
 
                  IF ( radius < pMixtInput%prepRealVal1 ) THEN
@@ -840,6 +934,11 @@ SUBROUTINE RFLU_InitFlowHardCode(pRegion)
                     radius = x
                     ur = pMixtInput%prepRealVal5
                     ut = 0.0_RFREAL
+                 ELSEIF (TRIM(global%casename)=="cone") THEN
+                    radius = SQRT(x**2 + y**2)
+                    theta = ATAN2(y,x)
+                    ur = pMixtInput%prepRealVal5 * cos(theta)
+                    ut = pMixtInput%prepRealVal5 * sin(theta)
                  ENDIF
 
                  IF ( radius < pMixtInput%prepRealVal1 ) THEN

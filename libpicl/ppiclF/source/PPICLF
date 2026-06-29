@@ -1,10 +1,9 @@
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
-! rprop: 48
+! rprop: 59
 ! rprop5: 0 - Storing Force Models
 ! map: 31
 !--- Particle Volume Fraction Feedback
@@ -18,9 +17,9 @@
       REAL*8 PPICLF_Y (12 ,80000) ! Solution
      > ,PPICLF_YDOT (12 ,80000) ! Total solution RHS
      > ,PPICLF_YDOTC (12 ,80000) ! Coupled solution RHS
-     > ,PPICLF_RPROP (48 ,80000) ! Real particle properties
+     > ,PPICLF_RPROP (59 ,80000) ! Real particle properties
      > ,PPICLF_RPROP2(0,80000) ! Secondary real particle properties
-     > ,PPICLF_RPROP3(0,80000) ! Third real particle properties
+     > ,PPICLF_RPROP3(10*50,80000) ! Third real particle properties
      > ,PPICLF_RPROP4(0,80000) ! Fourth real particle properties
      > ,PPICLF_RPROP5(0,80000) ! Fifth real particle properties
      > ,PPICLF_FEEDBK(31,80000) !Feedback particle terms
@@ -41,13 +40,13 @@
       REAL*8 PPICLF_Y1(12, 80000)
       COMMON /PPICLF_SLN_PREVIOUS_R/ PPICLF_Y1
 ! Previous time step solutions, may grow later
-      REAL*8 PPICLF_TIMEBH(0)
-      REAL*8 PPICLF_DRUDTPLAG(3,0,80000)
-      REAL*8 PPICLF_DRUDTMIXT(3,0,80000)
-      REAL*8 PPICLF_DTDTPLAG(0,80000)
-      REAL*8 PPICLF_DTDTMIXT(0,80000)
-      REAL*8 PPICLF_TMIXT(0,80000)
-      REAL*8 PPICLF_TPLAG(0,80000)
+      REAL*8 PPICLF_TIMEBH(50)
+      REAL*8 PPICLF_DRUDTPLAG(3,50,80000)
+      REAL*8 PPICLF_DRUDTMIXT(3,50,80000)
+      REAL*8 PPICLF_DTDTPLAG(50,80000)
+      REAL*8 PPICLF_DTDTMIXT(50,80000)
+      REAL*8 PPICLF_TMIXT(50,80000)
+      REAL*8 PPICLF_TPLAG(50,80000)
       COMMON /PPICLF_SLN_UNSTEADY/ PPICLF_TIMEBH
      > ,PPICLF_DRUDTPLAG
      > ,PPICLF_DRUDTMIXT
@@ -57,11 +56,10 @@
      > ,PPICLF_TPLAG
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
-! rprop: 48
+! rprop: 59
 ! rprop5: 0 - Storing Force Models
 ! map: 31
 !--- Particle Volume Fraction Feedback
@@ -106,11 +104,10 @@ C Grid
       COMMON /PPICLF_INTERP_I/ PPICLF_INT_ICNT, PPICLF_INT_MAP
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
-! rprop: 48
+! rprop: 59
 ! rprop5: 0 - Storing Force Models
 ! map: 31
 !--- Particle Volume Fraction Feedback
@@ -159,11 +156,10 @@ c Particle options
      > ,PPICLF_RK3DTRK
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
-! rprop: 48
+! rprop: 59
 ! rprop5: 0 - Storing Force Models
 ! map: 31
 !--- Particle Volume Fraction Feedback
@@ -188,8 +184,8 @@ c Bins
       COMMON /PPICLF_PARALLEL_BIN_GLOBAL_R/ PPICLF_BINS_DX, PPICLF_BINB
      > ,PPICLF_BIN_POS, PPICLF_PREVIOUSBINB
 C Ghost particles
-      REAL*8 PPICLF_RPROP_GP(12 +48 +31,8*80000)
-     > ,PPICLF_CP_MAP(12 +48 +31,80000)
+      REAL*8 PPICLF_RPROP_GP(12 +59 +31,8*80000)
+     > ,PPICLF_CP_MAP(12 +59 +31,80000)
       COMMON /PPICLF_PARALLEL_GHOST_R/ PPICLF_RPROP_GP, PPICLF_CP_MAP
       INTEGER*4 PPICLF_IPROP_GP(8,8*80000)
      > ,PPICLF_PARTICLEMOVED
@@ -203,11 +199,10 @@ C Ghost particles
       COMMON /PPICLF_PARALLEL_GHOST_N/ PARTICLE_NN
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
-! rprop: 48
+! rprop: 59
 ! rprop5: 0 - Storing Force Models
 ! map: 31
 !--- Particle Volume Fraction Feedback
@@ -319,11 +314,10 @@ C Ghost particles
      > y_per_min, y_per_max, z_per_min, z_per_max
 ! number of timesteps kept in history kernels
 !Change here when viscous unsteady on
-!#define PPICLF_VU 0
-!#define PPICLF_LRP3 6*PPICLF_VU
+!#define 10*50 0
 ! maximum number of triangular patch boundaries
 ! y, y1, ydot, ydotc: 12
-! rprop: 48
+! rprop: 59
 ! rprop5: 0 - Storing Force Models
 ! map: 31
 !--- Particle Volume Fraction Feedback

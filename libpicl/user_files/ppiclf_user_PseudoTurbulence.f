@@ -71,12 +71,13 @@
      >       k_Osnes, b_Osnes, KE_mean
       real*8 alpha_fluid, alpha_par, alpha_num, alpha_denum, 
      >       alpha_perp, alpha(3,3)
+      real*8 Rpar_Mehra, Rperp_Mehra
 
 ! Modeling Constants
-      real*8 C1, C2, C3, C4, C5,
+      real*8 C1, C2, C3, C4, C5, C6, C7,
      >       D1, D2, D3, D4, D5, D6, D7, D8,
      >       E1, E2, E3, E4
-      real*8 F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11,
+      real*8 F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
      >       G1, G2, G3, G4, G5, G6, G7, G8,
      >       H1, H2, H3, H4, H5, H6, H7, H8,
      >       A1, A2, A3, A4
@@ -96,23 +97,26 @@
                     D6 = -2.1376;
                     D7 =  0.4873;
                     D8 =  0.2395;
-                  ! Dr. Bala's terms
-                    D9  =  0.716
-                    D10 = -2.14
-                    D11 =  1.6
+                  ! Dr. Bala's terms (and added terms)
+       C6 =  2.238; D9  =  0.716
+       C7 = -6.918; D10 = -2.140
+                    D11 =  1.600
 
       ! Constants taken from Osnes paper, Table 2
+      ! (F11, G4, and G5 are modified)
       F1  = -0.0022; G1 = -0.2867; H1 =  0.4992
       F2  = -0.0219; G2 =  0.2176; H2 = -1.3528
       F3  =  0.0932; G3 =  0.2826; H3 = -0.1358
-      F4  = -0.0135; G4 = -0.0644; H4 = -0.1463
-      F5  =  0.0361; G5 =  0.0466; H5 =  0.2583
-      F6  =  0.0403; G6 =  0.0973; H6 = -0.3339
-      F7  = -0.0761; G7 = -0.0081; H7 = -0.0407
-      F8  =  0.0599; G8 = -0.0235; H8 = -0.0806
+      F4  = -0.0135; G4 = -0.494 ; H4 = -0.1463
+      F5  =  0.0361; G5 =  0.233 ; H5 =  0.2583
+      F6  =  0.0403;             ; H6 = -0.3339
+      F7  = -0.0761;             ; H7 = -0.0407
+      F8  =  0.0599;             ; H8 = -0.0806
       F9  =  0.0164;
       F10 =  0.0453;
-      F11 = -0.0265;
+      
+      F11 = -0.414;
+      F12 =  0.230
      
       ! zero out variables  at first
       Rmean_par = 0.0d0; Rmean_perp = 0.0d0
@@ -266,7 +270,7 @@ c---  bvec, cvec: two orthogonal vectors to avec
 
       ! Mach number correction at Re=100, coeff taken from Osnes
       ! cap vol fraction here at 0.3
-      k_Mach = min(rphip,0.3)*(-6.918*min(rphip,0.3) + 2.238) *
+      k_Mach = min(rphip,0.3)*(C7*min(rphip,0.3) + C6) *
      >      (tanh(C4/C5) + tanh((mp - C4)/C5))
 
 !        b_Mach = (D1 + (re/300.0)*(D2 + D3*re/300.0) +
@@ -285,7 +289,12 @@ c---  bvec, cvec: two orthogonal vectors to avec
 c--  Multiply by the mean relative flow kinetic energy to dimentionalize      
       KE_mean = 0.5d0 * vmag**2
       k_Osnes = k_Osnes * KE_mean
-                                                                     
+
+      Rpar_Mehra  = 2.0d0*rhof*k_tilde*KE_mean
+     >                 *(b_par  + 1.0d0/3.0d0)
+      Rperp_Mehra  = 2.0d0*rhof*k_tilde*KE_mean
+     >                 *(-b_par/2.0  + 1.0d0/3.0d0)
+
       ! Mean Eulerian Reynolds Subgrid Stress - Parallel Component   
       Rmean_par  = 2.0d0*k_Osnes*(b_Osnes  + 1.0d0/3.0d0)
                                                                      
@@ -306,14 +315,24 @@ c------ Lagrangian Model
       A1 = 0.0d0
       A2 = 0.064
 
-      A3 = G1 + G2/(min(rphip,0.3) + G3) + G4 * mp
+      ! 05/18/2026 - Thierry
+      ! This A3 is the old formulation of Osnes, leads to negative Rsg
+      ! A3 = G1 + G2/(min(rphip,0.3) + G3) + G4 * mp
+
+      ! New A3 formulation suggested by Osnes
+      A3 = (G1 + G2/(min(rphip,0.3) + G3)) * (1.0 + 0.169
+     >   *(tanh(G4/G5) - tanh((mp + G4)/G5)))
       
       ! 09/02/2025 - Cap according to Osnes model range
       A4 = H1 + H2*max(0.0d0, min(0.3d0, rphip))
      >        + H3*max(0.0d0, min(0.87d0, mp)) 
      >        + H4*max(30.0d0, min(266.0d0, re))/300.0d0
   
-      s_par = F8 + F9/(rphip + F10) + F11 * mp
+      !s_par = F8 + F9/(rphip + F10) + F11 * mp
+
+      s_par = F8 + F9/(rphip + F10) * (1.0 + 0.085*
+     > (tanh(F11/F12) - tanh((mp + F11)/F12)))
+
       !s_perp = G5/(phi + G6) + (G7*re)/(300.0*phi) + G8
 c---   We ditch Osnes expression for s_perp and assume it as big as s_par
       s_perp = s_par
@@ -347,7 +366,7 @@ c---   We ditch Osnes expression for s_perp and assume it as big as s_par
 c--  Multiply Lagrangian Model by Eulerian Model and gas density
       R_par  = R_par  * Rmean_par * rhof
       R_perp = R_perp * Rmean_perp * rhof
-  
+
 c--- R = |R_par,   0   ,   0   |
 c---     | 0   , R_perp,   0   |
 c---     | 0       0   , R_perp|
@@ -361,9 +380,19 @@ c--- Now Rotate the matrix, Rsg = Q . R . Q^T
   
       Rsg = matmul(Q, matmul(R,Qt))
 
-c--- All the PT models are per cell volume, we transform them per
-c--- particle
-      Rsg = Rsg*ppiclf_rprop(PPICLF_R_JVOLP,i)/rphip
+      ppiclf_rprop(PPICLF_R_RTildePar, i)  = Rmean_par*rhof
+      ppiclf_rprop(PPICLF_R_RTildePerp, i) = Rmean_perp*rhof
+      ppiclf_rprop(PPICLF_R_R11,i)         = Rsg(1,1)
+      ppiclf_rprop(PPICLF_R_R22,i)         = Rsg(2,2)
+      ppiclf_rprop(PPICLF_R_R33,i)         = Rsg(3,3)
+      ppiclf_rprop(PPICLF_R_KMehra,i)      = 2.0*rhof*k_tilde*KE_mean
+      ppiclf_rprop(PPICLF_R_KOsnes,i)      = 2.0*rhof*k_Osnes
+      ppiclf_rprop(PPICLF_R_RparMehra,i)   = Rpar_Mehra
+      ppiclf_rprop(PPICLF_R_RperpMehra,i)   = Rperp_Mehra
+      ppiclf_rprop(PPICLF_R_RTerm2Par,i) = 
+     >                    A2*CD_prime/max(CD_average,1.0d-8) 
+      ppiclf_rprop(PPICLF_R_RTerm2Perp,i) = 
+     >                    A3*CD_prime/max(CD_average,1.0d-8) 
 
 c--- Osnes Formulation for Triple Velocity Correlation
 
@@ -382,8 +411,6 @@ c--  then add mean
      >           + Tmean_par(3)
 
       Tsg = matmul(Q, T_par)
-
-      Tsg = Tsg*ppiclf_rprop(PPICLF_R_JVOLP,i)/rphip 
 
       ! Zhou et al.,  Eq. (31)
       ! Parallel component of Pseudo-Turbulent Diffusivity Tensor
@@ -413,18 +440,6 @@ c--  then add mean
       alpha(3,3) = alpha_perp
 
       alpha_PT = matmul(Q, matmul(alpha,Qt))
-
-      alpha_PT = alpha_PT*ppiclf_rprop(PPICLF_R_JVOLP,i)/rphip 
-
-!      if((ppiclf_nid.eq.0) .and. (i<=10) .and. iStage==3) then
-!        write(56,*) ppiclf_time, i,
-!     >   k_tilde, k_Mach, k_Osnes,
-!     >   KE_mean, Rmean_par,
-!     >   A2 * CD_prime / CD_average, xi_par,
-!     >   R_par/Rmean_par,
-!     >   R_par,
-!     >   R(1,1), Rsg(1,1)
-!      endif
 
       return
       end

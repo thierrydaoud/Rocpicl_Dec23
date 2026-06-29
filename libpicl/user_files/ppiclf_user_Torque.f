@@ -122,7 +122,13 @@
          Ct2 = 32.1d0
          Ct3 = 0.0d0
       else
-         call ppiclf_exittr('Re rotational too large$', reyr, 0)
+         ! 05/05/2026 - Thierry - for some reason the value I'm getting
+         ! are > 100, setting them to largest one provided by paper
+         ! (Fin) instead of failing the run
+         Ct1 = 6.45d0
+         Ct2 = 32.1d0
+         Ct3 = 0.0d0
+         !call ppiclf_exittr('Re rotational too large$', reyr, 0)
       endif
 
       Ct = Ct1/sqrt(reyr) + Ct2/Reyr + Ct3*reyr

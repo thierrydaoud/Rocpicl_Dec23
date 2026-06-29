@@ -3065,37 +3065,15 @@ MODULE RFLU_ModReadWriteFlow
          varX=pRegion%mixt%piclgradRhog(1,1,1:Ne), &
          varY=pRegion%mixt%piclgradRhog(2,1,1:Ne), &
          varZ=pRegion%mixt%piclgradRhog(3,1,1:Ne))
-      ! 03/20/2025 - Thierry - ends here
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'DivPhiQsg', &
-           var=pRegion%mixt%piclDivPhiQsg(1:Ne))
     E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'DivPhiRsg', &
-           varX=pRegion%mixt%piclDivPhiRsg(XCOORD,1:Ne), &
-           varY=pRegion%mixt%piclDivPhiRsg(YCOORD,1:Ne), &
-           varZ=pRegion%mixt%piclDivPhiRsg(ZCOORD,1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'RhsMomentum', &
-           varX=pRegion%mixt%piclRhsMomentum(XCOORD,1:Ne), &
-           varY=pRegion%mixt%piclRhsMomentum(YCOORD,1:Ne), &
-           varZ=pRegion%mixt%piclRhsMomentum(ZCOORD,1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'RhsEnergy', &
-           var=pRegion%mixt%piclRhsEnergy(1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'Energydotg', &
-           var=pRegion%mixt%Energydotg(1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'QsgT1', &
-           varX=pRegion%mixt%QsgT1(XCOORD,1:Ne), &
-           varY=pRegion%mixt%QsgT1(YCOORD,1:Ne), &
-           varZ=pRegion%mixt%QsgT1(ZCOORD,1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'QsgT2', &
-           varX=pRegion%mixt%QsgT2(XCOORD,1:Ne), &
-           varY=pRegion%mixt%QsgT2(YCOORD,1:Ne), &
-           varZ=pRegion%mixt%QsgT2(ZCOORD,1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'QsgT3', &
-           varX=pRegion%mixt%QsgT3(XCOORD,1:Ne), &
-           varY=pRegion%mixt%QsgT3(YCOORD,1:Ne), &
-           varZ=pRegion%mixt%QsgT3(ZCOORD,1:Ne))
-    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'JFCell', &
-           varX=pRegion%mixt%JFCell(XCOORD,1:Ne), &
-           varY=pRegion%mixt%JFCell(YCOORD,1:Ne), &
-           varZ=pRegion%mixt%JFCell(ZCOORD,1:Ne))
+         varX=pRegion%mixt%DivPhiRsg(XCOORD,1:Ne), &
+         varY=pRegion%mixt%DivPhiRsg(YCOORD,1:Ne), &
+         varZ=pRegion%mixt%DivPhiRsg(ZCOORD,1:Ne))
+    E_IO = VTK_VAR_XML(NC_NN = Ne, varname = 'FCell', &
+         varX=pRegion%mixt%FCell(XCOORD,1:Ne), &
+         varY=pRegion%mixt%FCell(YCOORD,1:Ne), &
+         varZ=pRegion%mixt%FCell(ZCOORD,1:Ne))
+      ! 03/20/2025 - Thierry - ends here
   END IF
 #endif
 
@@ -3268,15 +3246,8 @@ MODULE RFLU_ModReadWriteFlow
       E_IO = PVTK_VAR_XML(varname = 'Particle Volume Fraction', tp='Float64')
       ! 03/20/2025 - Thierry - begins here
       E_IO = PVTK_VAR_XML(Nc = 3, varname = 'Gradient Gas Density', tp='Float64' )
-      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'RhsMomentum', tp='Float64' )
       E_IO = PVTK_VAR_XML(Nc = 3, varname = 'DivPhiRsg', tp='Float64' )
-      E_IO = PVTK_VAR_XML(varname = 'DivPhiQsg', tp='Float64' )
-      E_IO = PVTK_VAR_XML(varname = 'RhsEnergy', tp='Float64' )
-      E_IO = PVTK_VAR_XML(varname = 'Energydotg', tp='Float64' )
-      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'QsgT1', tp='Float64' )
-      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'QsgT2', tp='Float64' )
-      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'QsgT3', tp='Float64' )
-      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'JFCell', tp='Float64' )
+      E_IO = PVTK_VAR_XML(Nc = 3, varname = 'FCell', tp='Float64' )
       ! 03/20/2025 - Thierry - ends here
   END IF
 #endif
@@ -4288,6 +4259,8 @@ IF ( global%casename .EQ. "cyldet" .OR. &
      global%casename .EQ. "shktb"  .OR. &
      global%casename .EQ. "cylds"  .OR. &
      global%casename .EQ. "rectshktb"  .OR. &
+     global%casename .EQ. "threeshock"  .OR. &
+     global%casename .EQ. "cone"  .OR. &
      global%casename .EQ. "barrelExp"  .OR. &
      global%casename .EQ. "wedge"  .OR. &
      global%casename .EQ. "sqdet"  .OR. &

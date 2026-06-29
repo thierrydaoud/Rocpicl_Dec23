@@ -524,17 +524,8 @@ SUBROUTINE RFLU_AllocateMemorySolCv(pRegion)
      ALLOCATE(pRegion%mixt%piclGradPhiQsg(3,3,pGrid%nCellsTot),STAT=errorFlag)
      ! 03/18/2026 - Thierry - Added gradient of T_g
      ALLOCATE(pRegion%mixt%piclgradTg(3,1,pGrid%nCellsTot),STAT=errorFlag)
-
-     ! 03/19/2026 - Thierry - Added for ParaView plotting - delete later
-     ALLOCATE(pRegion%mixt%piclDivPhiQsg(pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%piclDivPhiRsg(3,pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%piclRhsMomentum(3,pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%piclRhsEnergy(pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%QsgT1(3,pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%QsgT2(3,pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%QsgT3(3,pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%JFCell(3,pGrid%nCellsTot),STAT=errorFlag)
-     ALLOCATE(pRegion%mixt%Energydotg(pGrid%nCellsTot),STAT=errorFlag)
+     ALLOCATE(pRegion%mixt%DivPhiRsg(3,pGrid%nCellsTot),STAT=errorFlag)
+     ALLOCATE(pRegion%mixt%FCell(3,pGrid%nCellsTot),STAT=errorFlag)
 
 
      global%error = errorFlag

@@ -477,22 +477,13 @@ SUBROUTINE RFLU_DeallocateMemorySolCv(pRegion)
     DEALLOCATE(pRegion%mixt%piclPhiQsg,STAT=errorFlag)
     DEALLOCATE(pRegion%mixt%piclGradPhiQsg,STAT=errorFlag)
     DEALLOCATE(pRegion%mixt%piclgradTg,STAT=errorFlag)
+    DEALLOCATE(pRegion%mixt%DivPhiRsg,STAT=errorFlag)
+    DEALLOCATE(pRegion%mixt%FCell,STAT=errorFlag)
     ! 03/19/2025 - Thierry - ends here 
-
-    ! 03/19/2026 - Thierry - Added for ParaView plotting - delete later
-    DEALLOCATE(pRegion%mixt%piclDivPhiQsg, STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%piclDivPhiRsg, STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%piclRhsMomentum,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%piclRhsEnergy,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%QsgT1,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%QsgT2,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%QsgT3,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%JFCell,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%Energydotg,STAT=errorFlag)
     
      global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,485,'pRegion%mixt%piclfVF')
+      CALL ErrorStop(global,ERR_DEALLOCATE,476,'pRegion%mixt%piclfVF')
     END IF ! global%error
     ! 04/01/2025 - TLJ - begins here 
     DEALLOCATE(pRegion%mixt%piclFeedback,STAT=errorFlag)
@@ -568,7 +559,7 @@ SUBROUTINE RFLU_DeallocateMemorySolDv(pRegion)
     DEALLOCATE(pRegion%mixt%dv,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,562,'pRegion%mixt%dv')
+      CALL ErrorStop(global,ERR_DEALLOCATE,553,'pRegion%mixt%dv')
     END IF ! global%error
   END IF ! solverType
 
@@ -636,7 +627,7 @@ SUBROUTINE RFLU_DeallocateMemorySolGv(pRegion)
   DEALLOCATE(pRegion%mixt%gv,STAT=errorFlag)
   global%error = errorFlag
   IF (global%error /= ERR_NONE) THEN
-    CALL ErrorStop(global,ERR_DEALLOCATE,630,'pRegion%mixt%gv')
+    CALL ErrorStop(global,ERR_DEALLOCATE,621,'pRegion%mixt%gv')
   END IF ! global%error
 
 ! ******************************************************************************
@@ -710,7 +701,7 @@ SUBROUTINE RFLU_DeallocateMemorySolTv(pRegion)
     DEALLOCATE(pRegion%mixt%tv,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,704,'pRegion%mixt%tv')
+      CALL ErrorStop(global,ERR_DEALLOCATE,695,'pRegion%mixt%tv')
     END IF ! global%error
   END IF ! pMixtInput%computeTv
 
@@ -798,7 +789,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
       DEALLOCATE(pRegion%mixt%cvRef,STAT=errorFlag)
       global%error = errorFlag
       IF (global%error /= ERR_NONE) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,792,'pRegion%mixt%cvRef')
+        CALL ErrorStop(global,ERR_DEALLOCATE,783,'pRegion%mixt%cvRef')
       END IF ! global%error
     END IF ! global%abcKind
   END IF ! global%abcFlag 
@@ -811,7 +802,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pRegion%mixt%cvOld,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,805,'pRegion%mixt%cvOld')
+      CALL ErrorStop(global,ERR_DEALLOCATE,796,'pRegion%mixt%cvOld')
     END IF ! global%error
   END IF ! solverType
 
@@ -820,13 +811,13 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
       DEALLOCATE(pRegion%mixt%cvOld1,STAT=errorFlag)
       global%error = errorFlag
       IF (global%error /= ERR_NONE) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,814,'pRegion%mixt%cvOld1')
+        CALL ErrorStop(global,ERR_DEALLOCATE,805,'pRegion%mixt%cvOld1')
       END IF ! global%error
 
       DEALLOCATE(pRegion%mixt%cvOld2,STAT=errorFlag)
       global%error = errorFlag
       IF (global%error /= ERR_NONE) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,820,'pRegion%mixt%cvOld2')
+        CALL ErrorStop(global,ERR_DEALLOCATE,811,'pRegion%mixt%cvOld2')
       END IF ! global%error
     CASE ( SOLV_IMPLICIT_HM )
       CALL RFLU_DeallocateMemoryAuxVars(pRegion)
@@ -840,7 +831,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pRegion%dt,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,834,'pRegion%dt')
+      CALL ErrorStop(global,ERR_DEALLOCATE,825,'pRegion%dt')
     END IF ! global%error
   END IF ! solverType
 
@@ -852,20 +843,20 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pRegion%mixt%rhs,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,846,'pRegion%mixt%rhs')
+      CALL ErrorStop(global,ERR_DEALLOCATE,837,'pRegion%mixt%rhs')
     END IF ! global%error
 
     DEALLOCATE(pRegion%mixt%diss,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,852,'pRegion%mixt%diss')
+      CALL ErrorStop(global,ERR_DEALLOCATE,843,'pRegion%mixt%diss')
     END IF ! global%error
 
     IF ( global%flowType == FLOW_UNSTEADY ) THEN
       DEALLOCATE(pRegion%mixt%rhsSum,STAT=errorFlag)
       global%error = errorFlag
       IF (global%error /= ERR_NONE) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,859,'pRegion%mixt%rhsSum')
+        CALL ErrorStop(global,ERR_DEALLOCATE,850,'pRegion%mixt%rhsSum')
       END IF ! global%error
     END IF ! global%flowType
   END IF ! solverType
@@ -882,19 +873,19 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pRegion%mixt%gradCell,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,876,'pRegion%mixt%gradCell')
+      CALL ErrorStop(global,ERR_DEALLOCATE,867,'pRegion%mixt%gradCell')
     END IF ! global%error
 
     DEALLOCATE(pRegion%mixt%gradCellOld,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,882,'pRegion%mixt%gradCellOld')
+      CALL ErrorStop(global,ERR_DEALLOCATE,873,'pRegion%mixt%gradCellOld')
     END IF ! global%error
 
     DEALLOCATE(pRegion%mixt%gradCellOld2,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,888,'pRegion%mixt%gradCellOld2')
+      CALL ErrorStop(global,ERR_DEALLOCATE,879,'pRegion%mixt%gradCellOld2')
     END IF ! global%error
   ELSE
     IF ( (pMixtInput%spaceDiscr == DISCR_UPW_ROE     ) .OR. &
@@ -905,14 +896,14 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
         DEALLOCATE(pRegion%mixt%gradCell,STAT=errorFlag)
         global%error = errorFlag
         IF (global%error /= ERR_NONE) THEN
-          CALL ErrorStop(global,ERR_DEALLOCATE,899,'pRegion%mixt%gradCell')
+          CALL ErrorStop(global,ERR_DEALLOCATE,890,'pRegion%mixt%gradCell')
         END IF ! global%error
       END IF ! pMixtInput%spaceOrder
     ELSE IF ( pMixtInput%spaceDiscr == DISCR_OPT_LES ) THEN
       DEALLOCATE(pRegion%mixt%gradCell,STAT=errorFlag)
       global%error = errorFlag
       IF (global%error /= ERR_NONE) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,906,'pRegion%mixt%gradCell')
+        CALL ErrorStop(global,ERR_DEALLOCATE,897,'pRegion%mixt%gradCell')
       END IF ! global%error
     END IF ! pMixtInput%spaceDiscr
   END IF ! solverType
@@ -926,7 +917,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
       DEALLOCATE(pRegion%mixt%gradFace,STAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,930,'pRegion%mixt%gradFace')
+        CALL ErrorStop(global,ERR_DEALLOCATE,921,'pRegion%mixt%gradFace')
       END IF ! global%error
     END IF ! pMixtInput%flowModel
   END IF ! solverType
@@ -939,7 +930,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
         DEALLOCATE(pPatch%mixt%gradFace,STAT=errorFlag)
         global%error = errorFlag
         IF ( global%error /= ERR_NONE ) THEN
-          CALL ErrorStop(global,ERR_DEALLOCATE,943,'pPatch%mixt%gradFace')
+          CALL ErrorStop(global,ERR_DEALLOCATE,934,'pPatch%mixt%gradFace')
         END IF ! global%error
       END IF ! RFLU_DecideNeedBGradFace
     END DO ! iPatch
@@ -960,7 +951,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pGrid%rhs,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,964,'pGrid%rhs')
+      CALL ErrorStop(global,ERR_DEALLOCATE,955,'pGrid%rhs')
     END IF ! global%error
 
 ! ------------------------------------------------------------------------------
@@ -971,7 +962,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
       DEALLOCATE(pGrid%disp,STAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,975,'pGrid%disp')
+        CALL ErrorStop(global,ERR_DEALLOCATE,966,'pGrid%disp')
       END IF ! global%error
     END IF ! pMixtInput%moveGridType
 
@@ -982,14 +973,14 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pGridOld%xyz,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,986,'pRegion%gridOld%xyz')
+      CALL ErrorStop(global,ERR_DEALLOCATE,977,'pRegion%gridOld%xyz')
     END IF ! global%error
 
     IF ( global%solverType == SOLV_IMPLICIT_NK ) THEN 
       DEALLOCATE(pGridOld2%xyz,STAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,993,'pRegion%gridOld2%xyz')
+        CALL ErrorStop(global,ERR_DEALLOCATE,984,'pRegion%gridOld2%xyz')
       END IF ! global%error
     END IF ! global%solverType
 
@@ -1000,14 +991,14 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
     DEALLOCATE(pGridOld%vol,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,1004,'pRegion%gridOld%vol')
+      CALL ErrorStop(global,ERR_DEALLOCATE,995,'pRegion%gridOld%vol')
     END IF ! global%error
 
     IF ( global%solverType == SOLV_IMPLICIT_NK ) THEN 
       DEALLOCATE(pGridOld2%vol,STAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,1011,'pRegion%gridOld2%vol')
+        CALL ErrorStop(global,ERR_DEALLOCATE,1002,'pRegion%gridOld2%vol')
       END IF ! global%error
     END IF ! global%solverType
 
@@ -1024,7 +1015,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
         DEALLOCATE(pPatch%dXyz,STAT=errorFlag)
         global%error = errorFlag
         IF ( global%error /= ERR_NONE ) THEN
-          CALL ErrorStop(global,ERR_DEALLOCATE,1029,'pPatch%dXyz')
+          CALL ErrorStop(global,ERR_DEALLOCATE,1020,'pPatch%dXyz')
         END IF ! global%error
 
       END DO ! iPatch
@@ -1047,7 +1038,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep(pRegion)
   DEALLOCATE(pRegion%mixt%sd,STAT=errorFlag)
   global%error = errorFlag
   IF ( global%error /= ERR_NONE ) THEN
-    CALL ErrorStop(global,ERR_DEALLOCATE,1067,'pRegion%mixt%sd')
+    CALL ErrorStop(global,ERR_DEALLOCATE,1058,'pRegion%mixt%sd')
   END IF ! global%error
 
 ! ******************************************************************************
@@ -1126,7 +1117,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep_C(pRegion)
   DEALLOCATE(pRegion%mixt%mfMixt,STAT=errorFlag)
   global%error = errorFlag
   IF ( global%error /= ERR_NONE ) THEN
-    CALL ErrorStop(global,ERR_DEALLOCATE,1146,'pRegion%mixt%mfMixt')
+    CALL ErrorStop(global,ERR_DEALLOCATE,1137,'pRegion%mixt%mfMixt')
   END IF ! global%error
 
   IF ( pRegion%grid%nPatches > 0 ) THEN
@@ -1136,7 +1127,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep_C(pRegion)
       DEALLOCATE(pPatch%mfMixt,STAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,1156,'pPatch%mfMixt')
+        CALL ErrorStop(global,ERR_DEALLOCATE,1147,'pPatch%mfMixt')
       END IF ! global%error
     END DO ! iPatch
   END IF ! pRegion%grid%nPatches
@@ -1149,7 +1140,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep_C(pRegion)
     DEALLOCATE(pRegion%mixt%delP,STAT=errorFlag)
     global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,1169,'pRegion%mixt%delP')
+      CALL ErrorStop(global,ERR_DEALLOCATE,1160,'pRegion%mixt%delP')
     END IF ! global%error
   END IF ! solverType
 
@@ -1161,13 +1152,13 @@ SUBROUTINE RFLU_DeallocateMemoryTStep_C(pRegion)
     DEALLOCATE(pRegion%mixt%vfMixt,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,1181,'pRegion%mixt%vfMixt')
+      CALL ErrorStop(global,ERR_DEALLOCATE,1172,'pRegion%mixt%vfMixt')
     END IF ! global%error
 
     DEALLOCATE(pRegion%mixt%vfMixtOld,STAT=errorFlag)
     global%error = errorFlag
     IF ( global%error /= ERR_NONE ) THEN
-      CALL ErrorStop(global,ERR_DEALLOCATE,1187,'pRegion%mixt%vfMixtOld')
+      CALL ErrorStop(global,ERR_DEALLOCATE,1178,'pRegion%mixt%vfMixtOld')
     END IF ! global%error
   END IF ! solverType
 
@@ -1247,7 +1238,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep_I(pRegion)
   DEALLOCATE(pRegion%mixt%vfMixt,STAT=errorFlag)
   global%error = errorFlag
   IF ( global%error /= ERR_NONE ) THEN
-    CALL ErrorStop(global,ERR_DEALLOCATE,1267,'pRegion%mixt%vfMixt')
+    CALL ErrorStop(global,ERR_DEALLOCATE,1258,'pRegion%mixt%vfMixt')
   END IF ! global%error
 
   IF ( pRegion%grid%nPatches > 0 ) THEN
@@ -1257,7 +1248,7 @@ SUBROUTINE RFLU_DeallocateMemoryTStep_I(pRegion)
       DEALLOCATE(pPatch%vfMixt,STAT=errorFlag)
       global%error = errorFlag
       IF ( global%error /= ERR_NONE ) THEN
-        CALL ErrorStop(global,ERR_DEALLOCATE,1277,'pPatch%vfMixt')
+        CALL ErrorStop(global,ERR_DEALLOCATE,1268,'pPatch%vfMixt')
       END IF ! global%error
     END DO ! iPatch
   END IF ! pRegion%grid%nPatches

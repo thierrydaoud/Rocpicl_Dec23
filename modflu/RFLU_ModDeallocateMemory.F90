@@ -467,18 +467,9 @@ SUBROUTINE RFLU_DeallocateMemorySolCv(pRegion)
     DEALLOCATE(pRegion%mixt%piclPhiQsg,STAT=errorFlag)
     DEALLOCATE(pRegion%mixt%piclGradPhiQsg,STAT=errorFlag)
     DEALLOCATE(pRegion%mixt%piclgradTg,STAT=errorFlag)
+    DEALLOCATE(pRegion%mixt%DivPhiRsg,STAT=errorFlag)
+    DEALLOCATE(pRegion%mixt%FCell,STAT=errorFlag)
     ! 03/19/2025 - Thierry - ends here 
-
-    ! 03/19/2026 - Thierry - Added for ParaView plotting - delete later
-    DEALLOCATE(pRegion%mixt%piclDivPhiQsg, STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%piclDivPhiRsg, STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%piclRhsMomentum,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%piclRhsEnergy,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%QsgT1,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%QsgT2,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%QsgT3,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%JFCell,STAT=errorFlag)
-    DEALLOCATE(pRegion%mixt%Energydotg,STAT=errorFlag)
     
      global%error = errorFlag
     IF (global%error /= ERR_NONE) THEN
